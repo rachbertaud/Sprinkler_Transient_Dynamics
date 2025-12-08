@@ -95,7 +95,7 @@ fprintf("Error in Phi Estimation: %f \n", error)
 %% Fitting for gamma and omega_0
 % This section takes our generated solution, and fits the data to solve for
 % omega and gamma.
-seg_start = round(N/2 + N/3);
+seg_start = int8(N/2 + N/3);
 t_seg = t(seg_start:end);   %going moderately far into the system     
 y_seg = phi_gen(seg_start:end); 
 
