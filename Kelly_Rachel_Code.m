@@ -16,7 +16,7 @@ set(groot, 'defaultLineMarkerSize', 15);
 y_0 = 0; %IC for y
 y_prime_0 = 0.00001; %IC for y'
 
-N = 6*2048;     %Domain definitions so that everything is the same size when we go into fourier space
+N = 2*2048;     %Domain definitions so that everything is the same size when we go into fourier space
 L = 200;
 h = L/N;   %Downsample the other way pls
 x = h*(1:N)'-L/2;  %Defining x (or t) domain for function

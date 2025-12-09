@@ -113,10 +113,10 @@ ft = fittype(@(gamma, w0, x) ...
 
 
 gamma_hat = fit_1.gamma; %Pulling out the actual fitted values
-w0_hat    = fit_1.w0;
+w_0_hat    = fit_1.w0;
 
 %Constructing G_hat using the fitted values
-G_hat = @(k) -1.0./(k.^2 + 2.0*1i*gamma_hat.*k - w0_hat^2);
+G_hat = @(k) -1.0./(k.^2 + 2.0*1i*gamma_hat.*k - w_0_hat^2);
 
 % Different forcing funtion options
 gauss = @(t,t_0,sigma) (1.0/(sigma*sqrt(2.0*pi)))*exp(-0.5*((t-t_0)/sigma).^2);
@@ -143,8 +143,15 @@ legend('Actual Tau','Inverse Solve')
 xlim([0,5])
 hold off
 
+%%
 error_inv = norm(signal - para(t))/norm(para(t));
 fprintf("Error in Tau Estimation: %f \n", error_inv)
+
+error_gam = norm(gamma_hat - gamma)/norm(gamma);
+fprintf("Error in Gamma Estimation: %f \n", error_gam)
+
+error_omg = norm(w_0_hat - w_0)/norm(w_0);
+fprintf("Error in Omega Estimation: %f \n", error_omg)
 
 
 %% Functions 
