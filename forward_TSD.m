@@ -106,6 +106,25 @@ w_0 = sqrt(b_est^2 + gamma^2);
 
 [c1, c2] = get_constant(gamma, w_0, x_peaks(peak_index), y_peaks(peak_index)); %Use solution at time t (user determines time t using index) where a peak occurs
 
+%%Fitting with our Guesses
+
+ODE_fit_type = fittype(@(gamma, w0, c1, c2, x) ...
+        exp(-gamma.*x) .* ( ...
+        c1.*cos( sqrt(w0.^2 - gamma.^2).*x ) + ...
+        c2.*sin( sqrt(w0.^2 - gamma.^2).*x ) ), ...
+        'independent', 'x', 'dependent', 'y', ...
+        'coefficients', {'gamma','w0', 'c1', 'c2'});
+
+options = fitoptions(ODE_fit_type);
+options.StartPoint = [gamma, w_0, c1, c2];
+
+ODE_fit = fit(t_seg', y_seg', ODE_fit_type, options); %Calling the actual fit, with user inputted guesses
+
+
+gamma = ODE_fit.gamma; %Pulling out the actual fitted values
+w_0    = ODE_fit.w0;
+c1 = ODE_fit.c1;
+c2 = ODE_fit.c2;
 
 
 % Makes function using derived stuff
@@ -162,6 +181,7 @@ end
 
 %smooth data for fourier transform
 franken_y_check = smoothdata(franken_y, "gaussian", 10);
+franken_y = franken_y_check;
 error_smooth = norm(franken_y_check - franken_y)/norm(franken_y);
 fprintf("norm 2 error from smoothing y: %d \n", error_smooth)
 %%

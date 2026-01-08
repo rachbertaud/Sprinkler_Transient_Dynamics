@@ -16,50 +16,46 @@ clc
 clear all
 %% Extract Data
 
-fig = openfig('reverse_800.fig'); %open figure
+fig = openfig('reverse_800.fig'); %open figure containing data from NYU 
 
-dataObjs = findobj(fig, 'Type', 'line'); %find the line
+dataObjs = findobj(fig, 'Type', 'line'); %find the line of data
 
-xData = get(dataObjs, 'XData'); %get xData from the line
-yData = get(dataObjs, 'YData'); %get yData from the line
+xData = get(dataObjs, 'XData'); %get all x data from the line
+yData = get(dataObjs, 'YData'); %get all y data from the line
 
 close all 
 
-%pull out peaks data
+%pull out peaks data (orange circles)
 x_peaks = xData{1}; 
 y_peaks = yData{1};
 
-%pull out all data
+%pull out the phi data (blue curve)
 full_X = xData{2};
 full_y = yData{2};
 
 %%
 
-peak_index = 49; %At what t index for peaks we want the inverse solve
+% peak index will define what peak we are choosing for the solve of coeff.
+peak_index = 49; 
 
 N = length(full_X); %Pull out full length of data!
 
 %determine which index of the full data set our peak index for inverse solve occurs at
 for i = 1:1:N
     if(full_X(i) == x_peaks(peak_index))
-        index = i;
+        index = i; %index is the index point in the full data set that the peak defined by "peak_data" exists at
     end 
 end
 
-% full_y = full_y - full_y(1);
-% y_peaks = y_peaks - full_y(1);
+t_seg = full_X(index:end); %getting all x data after the peak of interest       
+y_seg = full_y(index:end); %getting all y data after the peak of interest 
 
-close all
-clf
+%% Fitting for initial guesses of gamma and w0
 
-% Pulls out data after our cutting index for inverse solve
-t_seg = full_X(index:end);        
-y_seg = full_y(index:end); 
-
-%% we want to fit for gamma and w0 and see if we can pull this info out from the data!
 aoi = x_peaks(peak_index:end); % this is the peak area of interest, since this is all the points at and after our determined cutting point
 end_peaks = length(aoi); %determine the length of the area of interest
-period_est = zeros(1, end_peaks - 2); %define zzero vector to fill with our period estimate
+period_est = zeros(1, end_peaks - 2); %define zero vector to fill with our period estimate
+
 j = 1; %indexing variable
 for i = peak_index:1:(length(x_peaks) - 2) %for all the points after our area of interest
     period_est(j) = x_peaks(i + 2) - x_peaks(i); %find out the period after our picked solve index
@@ -69,7 +65,6 @@ end
 b_est = (2*pi)/mean(period_est); %estimate the period using the mean of the period data found above
 
 
-%% Guessing for gamma might work as well!
 x_gamma = []; %to fill with gamma data
 y_gamma = []; %to fill with gamma data
 %we know we are starting at a peak, so the period occurs every 2 peaks. so
@@ -79,7 +74,7 @@ for i = peak_index:2:(length(x_peaks))
     y_gamma = [y_gamma y_peaks(i)] ;
 end
 
-%confirms we got the data we wanted
+%%confirms we got the data we wanted
 % hold on 
 % plot(x_peaks, y_peaks)
 % plot(x_gamma, y_gamma)
@@ -94,11 +89,13 @@ y_gamma = y_gamma./y_gamma(1);
 exp_fit_type = fittype("exp(-gamma*x)",...
     dependent='y', independent='x',...
     coefficients='gamma');
+
 options = fitoptions(exp_fit_type);
 options.StartPoint = 0.4;
+
 exp_fit = fit(x_gamma', y_gamma', exp_fit_type, options);
 
-%Pull/solve data from fits
+%Pull/solve for gamma/w0 from fits
 gamma = exp_fit.gamma;
 w_0 = sqrt(b_est^2 + gamma^2);
 
@@ -106,7 +103,25 @@ w_0 = sqrt(b_est^2 + gamma^2);
 
 [c1, c2] = get_constant(gamma, w_0, x_peaks(peak_index), y_peaks(peak_index)); %Use solution at time t (user determines time t using index) where a peak occurs
 
+%%Fitting with our Guesses
 
+ODE_fit_type = fittype(@(gamma, w0, c1, c2, x) ...
+        exp(-gamma.*x) .* ( ...
+        c1.*cos( sqrt(w0.^2 - gamma.^2).*x ) + ...
+        c2.*sin( sqrt(w0.^2 - gamma.^2).*x ) ), ...
+        'independent', 'x', 'dependent', 'y', ...
+        'coefficients', {'gamma','w0', 'c1', 'c2'});
+
+options = fitoptions(ODE_fit_type);
+options.StartPoint = [gamma, w_0, c1, c2];
+
+ODE_fit = fit(t_seg', y_seg', ODE_fit_type, options); %Calling the actual fit, with user inputted guesses
+
+
+gamma = ODE_fit.gamma; %Pulling out the actual fitted values
+w_0    = ODE_fit.w0;
+c1 = ODE_fit.c1;
+c2 = ODE_fit.c2;
 
 % Makes function using derived stuff
 phi_an = @(x) (exp(-gamma.*x)).*(c1.*cos(sqrt(w_0^2 - gamma^2).*x) + c2.*sin(sqrt(w_0^2 - gamma^2).*x)); %define the solution in terms of c_1 and c_2
@@ -137,14 +152,6 @@ franken_x = [x_neg, full_X(1:index), x_end]; %put our new x domain together
 franken_y = [y_neg, full_y(1:index), phi_an(x_end)]; %put our new y domain together
 
 
-
-figure(2)
-hold on 
-plot(franken_x, franken_y)
-plot(full_X(index), full_y(index))
-legend('Combined Data for FFT')
-hold off
-
 %%
 
 N = 2*2048;     %Domain definitions so that everything is the same size when we go into fourier space
@@ -160,21 +167,21 @@ for i = N/2:1:(2*N/3)
 end 
 
 %smooth data for fourier transform
-franken_y = smoothdata(franken_y);
+franken_y_check = smoothdata(franken_y, "gaussian", 10);
+franken_y = franken_y_check;
+error_smooth = norm(franken_y_check - franken_y)/norm(franken_y);
+fprintf("norm 2 error from smoothing y: %d \n", error_smooth)
 
 
-%%
+G_hat = @(k) -1.0./(k.^2 + 2.0*1i*gamma.*k - w_0^2); %defining greens function
+
+kk = ((2*pi)/L)*[0:N/2-1 0 -N/2+1:-1]; %defining domain for FFT
 
 
-G_hat = @(k) -1.0./(k.^2 + 2.0*1i*gamma.*k - w_0^2);
-
-kk = ((2*pi)/L)*[0:N/2-1 0 -N/2+1:-1]; 
+signal = ifft(fft(franken_y)./G_hat(-kk));  %Do the FFT and IFFT to output the torque
 
 
-signal = ifft(fft(franken_y)./G_hat(-kk));  
-
-%%
-
+%picking an x point to plot at (the point of interest here is 12.1234)
 for i = 1:1:N
     if(abs(franken_x(i) - 12.1234) < 5e-5)
         index_plot = i;
@@ -182,25 +189,23 @@ for i = 1:1:N
 end
 
 
-%%
-
 %Plots output
-figure(3)
+figure(2)
 hold on
 plot(franken_x, signal)
 plot(franken_x(index_plot), franken_y(index_plot), 'ro')
-
 legend('Inverse Solve')
 title("Solving for Tau with Inverse FFT")
 xlim([0,40])
 hold off
 
-figure(4)
+figure(3)
 hold on
 plot(franken_x, franken_y)
 plot(franken_x(index_plot), franken_y(index_plot), 'ro')
 xlim([0,40])
 legend('Combined Data')
+title("Plot of Combined Sprinkler Data Used in FFT")
 hold off
 
 %% Going backwards
@@ -217,7 +222,7 @@ dydt = @(t,y)[y(2); -(2*gamma)*y(2) - (w_0)^2*y(1) + para(t)]; %Actual ODE is he
 
 phi_gen = y(:,1)'; %generated phi data
 
-figure(5)
+figure(4)
 hold on
 plot((full_X), phi_gen)
 plot(full_X, full_y)
