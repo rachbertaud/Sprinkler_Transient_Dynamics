@@ -14,16 +14,17 @@ set(groot, 'defaultLineMarkerSize', 15);
 
 clc
 clear all
-%% Extract Data
+
+%%Extract Data
 
 fig = openfig('reverse_800.fig'); %open figure containing data from NYU 
 
+%
 dataObjs = findobj(fig, 'Type', 'line'); %find the line of data
 
 xData = get(dataObjs, 'XData'); %get all x data from the line
 yData = get(dataObjs, 'YData'); %get all y data from the line
 
-close all 
 
 %pull out peaks data (orange circles)
 x_peaks = xData{1}; 
@@ -33,6 +34,8 @@ y_peaks = yData{1};
 full_X = xData{2};
 full_y = yData{2};
 
+clf 
+close all
 %%
 
 % peak index will define what peak we are choosing for the solve of coeff.
@@ -127,14 +130,19 @@ c2 = ODE_fit.c2;
 phi_an = @(x) (exp(-gamma.*x)).*(c1.*cos(sqrt(w_0^2 - gamma^2).*x) + c2.*sin(sqrt(w_0^2 - gamma^2).*x)); %define the solution in terms of c_1 and c_2
 
 %Plotting for visual validation
-figure(1)
+f = figure(1);
+theme(f,"light");
 hold on
-plot(full_X, full_y, 'm-')
-plot(full_X, phi_an(full_X),'b')
-plot(x_peaks(peak_index), y_peaks(peak_index), 'rx')
+d1 = plot(full_X(1:2:(3*N/4 - 80)), full_y(1:2:(3*N/4 - 80)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255], 'DisplayName','Original Sprinkler Data');
+plot(full_X((3*N/4 - 79):6:end), full_y((3*N/4 - 79):6:end), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+d2 = plot(full_X, phi_an(full_X),'-', 'Color',[227/255,159/255,246/255], 'DisplayName', 'Analytical Fit of Sprinkler Data');
+d3 = plot(x_peaks(peak_index), y_peaks(peak_index), 'o','Color', [92/255,188/255,99/255], 'DisplayName','$\phi(t_0)$ Used for Fit');
 % plot(full_X(index), full_y(index), 'go')
-ylim([-4,4])
-legend('Data from Experiment', 'Analytical Fit', 'Point Used for Fit')
+ylim([-2,2])
+xlim([20,40])
+xlabel("t")
+ylabel("$$\phi(t)$$")
+legend([d1 d2 d3])
 hold off
 
 error = norm(phi_an(full_X(index:end)) - full_y(index:end))/norm(full_y(index:end));
@@ -167,11 +175,11 @@ for i = N/2:1:(2*N/3)
 end 
 
 %smooth data for fourier transform
-franken_y_check = smoothdata(franken_y, "gaussian", 10);
-franken_y = franken_y_check;
+franken_y_check = smoothdata(franken_y, "gaussian", 5);
+
 error_smooth = norm(franken_y_check - franken_y)/norm(franken_y);
 fprintf("norm 2 error from smoothing y: %d \n", error_smooth)
-
+franken_y = franken_y_check;
 
 G_hat = @(k) -1.0./(k.^2 + 2.0*1i*gamma.*k - w_0^2); %defining greens function
 
@@ -190,20 +198,25 @@ end
 
 
 %Plots output
-figure(2)
+f = figure(2);
+theme(f,"light");
 hold on
-plot(franken_x, signal)
-plot(franken_x(index_plot), franken_y(index_plot), 'ro')
-legend('Inverse Solve')
-title("Solving for Tau with Inverse FFT")
+plot(franken_x, signal, 'Color',[227/255,159/255,246/255])
+legend('Inverse Solve Solution')
+title("Solving for Torque Function with Inverse FFT")
+xlabel("t")
+ylabel("$$\tau(t)$$")
+yticks(-100:20:100)
 xlim([0,40])
 hold off
 
-figure(3)
+f = figure(3);
+theme(f,"light");
 hold on
-plot(franken_x, franken_y)
-plot(franken_x(index_plot), franken_y(index_plot), 'ro')
+plot(franken_x, franken_y,'Color',[227/255,159/255,246/255])
 xlim([0,40])
+xlabel("t")
+ylabel("$$\phi(t)$$")
 legend('Combined Data')
 title("Plot of Combined Sprinkler Data Used in FFT")
 hold off
@@ -222,11 +235,22 @@ dydt = @(t,y)[y(2); -(2*gamma)*y(2) - (w_0)^2*y(1) + para(t)]; %Actual ODE is he
 
 phi_gen = y(:,1)'; %generated phi data
 
-figure(4)
+N = length(full_X);
+
+f = figure(4);
+theme(f,"light");
 hold on
-plot((full_X), phi_gen)
-plot(full_X, full_y)
-legend('Using Computed Torque Signal', 'Original Data')
+%plot((full_X), phi_gen,'-', 'Color',[227/255,159/255,246/255][55/255,55/255,55/255], 'DisplayName','Sprinkler Data Using Computed Torque Signal')
+d1 = plot(full_X(1:20:(N/4)), full_y(1:20:(N/4)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255], 'DisplayName','Original Sprinkler Data');
+plot(full_X((N/4 + 1):2:(N/3 + 10)), full_y((N/4 + 1):2:(N/3 + 10)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+plot(full_X((N/3 + 11):5:(N/2 + 35)), full_y((N/3 + 11):5:(N/2 + 35)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+plot(full_X((N/2 + 36):2:(3*N/4)), full_y((N/2 + 36):2:(3*N/4)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+plot(full_X((3*N/4 + 1):6:end), full_y((3*N/4 + 1):6:end), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+d2 = plot((full_X), phi_gen,'-', 'Color',[227/255,159/255,246/255], 'DisplayName','Sprinkler Data Using Computed Torque Signal');
+legend([d1 d2])
+title("ODE45 Soltuion Using Comptued Torque")
+xlabel("t")
+ylabel("$$\phi(t)$$")
 hold off
 
 
