@@ -12,7 +12,7 @@ set(groot, 'defaultLegendFontSize', 30);
 set(groot, 'defaultLineLineWidth', 3);
 set(groot, 'defaultLineMarkerSize', 15);
 
-clc
+
 clear all
 
 %%Extract Data
@@ -133,8 +133,8 @@ phi_an = @(x) (exp(-gamma.*x)).*(c1.*cos(sqrt(w_0^2 - gamma^2).*x) + c2.*sin(sqr
 f = figure(1);
 theme(f,"light");
 hold on
-d1 = plot(full_X(1:2:(3*N/4 - 80)), full_y(1:2:(3*N/4 - 80)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255], 'DisplayName','Original Sprinkler Data');
-plot(full_X((3*N/4 - 79):6:end), full_y((3*N/4 - 79):6:end), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+d1 = plot(full_X(1:2:(round(3*N/4) - 80)), full_y(1:2:(round(3*N/4) - 80)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255], 'DisplayName','Original Sprinkler Data');
+plot(full_X((round(3*N/4) - 79):6:end), full_y((round(3*N/4) - 79):6:end), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
 d2 = plot(full_X, phi_an(full_X),'-', 'Color',[227/255,159/255,246/255], 'DisplayName', 'Analytical Fit of Sprinkler Data');
 d3 = plot(x_peaks(peak_index), y_peaks(peak_index), 'o','Color', [92/255,188/255,99/255], 'DisplayName','$\phi(t_0)$ Used for Fit');
 % plot(full_X(index), full_y(index), 'go')
@@ -241,11 +241,11 @@ f = figure(4);
 theme(f,"light");
 hold on
 %plot((full_X), phi_gen,'-', 'Color',[227/255,159/255,246/255][55/255,55/255,55/255], 'DisplayName','Sprinkler Data Using Computed Torque Signal')
-d1 = plot(full_X(1:20:(N/4)), full_y(1:20:(N/4)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255], 'DisplayName','Original Sprinkler Data');
-plot(full_X((N/4 + 1):2:(N/3 + 10)), full_y((N/4 + 1):2:(N/3 + 10)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
-plot(full_X((N/3 + 11):5:(N/2 + 35)), full_y((N/3 + 11):5:(N/2 + 35)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
-plot(full_X((N/2 + 36):2:(3*N/4)), full_y((N/2 + 36):2:(3*N/4)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
-plot(full_X((3*N/4 + 1):6:end), full_y((3*N/4 + 1):6:end), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+d1 = plot(full_X(1:20:round(N/4)), full_y(1:20:round(N/4)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255], 'DisplayName','Original Sprinkler Data');
+plot(full_X((round(N/4) + 1):2:(round(N/3) + 10)), full_y((round(N/4) + 1):2:(round(N/3) + 10)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+plot(full_X((round(N/3) + 11):5:(round(N/2) + 35)), full_y((round(N/3) + 11):5:(round(N/2) + 35)), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+plot(full_X((round(N/2) + 36):2:(round(3*N/4))), full_y((round(N/2) + 36):2:(round(3*N/4))), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
+plot(full_X((round(3*N/4) + 1):6:end), full_y((round(3*N/4) + 1):6:end), 'square', 'MarkerSize', 5, 'Color',[252/255,70/255,170/255])
 d2 = plot((full_X), phi_gen,'-', 'Color',[227/255,159/255,246/255], 'DisplayName','Sprinkler Data Using Computed Torque Signal');
 legend([d1 d2])
 title("ODE45 Soltuion Using Comptued Torque")
@@ -257,6 +257,8 @@ hold off
 error1 = norm(phi_gen(1:index) - full_y(1:index))/norm(full_y(1:index));
 fprintf("norm two error of original data and output using solved torque: %d \n", error1)
 
+
+%%
 
 %General Solution Constant Solves for ODE Analytical
 
