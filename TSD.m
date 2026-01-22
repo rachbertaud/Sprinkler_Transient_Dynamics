@@ -1,15 +1,22 @@
 clear all 
 
+
 %% User Inputs
 plot_switch = 1; %switches on plots (1) or no plots (0)
-spin_switch = 1; %reads reverse (0) or forward (1) data
+spin_switch = 0; %reads reverse (0) or forward (1) data
 fit_switch = 1; %fits data using estimates (1) or no fit after estimates (0)
-process_data_switch = 1; %process data (1) or not (0) (no option to not process data right now)
+process_data_switch = 0; %process data (1) or not (0) (no option to not process data right now)
 
-peak_index = 60; %At what t index for peaks we want the inverse solve
-% 49 is good for reverse, 60 is good for forward
+
 
 %% Main Code
+
+if(spin_switch == 0)
+    peak_index = 49; %At what t index for peaks we want the inverse solve
+else
+    peak_index = 60;
+end 
+% 49 is good for reverse, 60 is good for forward
 
 %reads data from figure and outputs:
 % full data (full_x, full_y) 
@@ -40,10 +47,12 @@ phi_an = @(x) (exp(-gamma.*x)).*(c1.*cos(sqrt(w_0^2 - gamma^2).*x) + c2.*sin(sqr
 
 %Prints relative error between analytical solution and data
 error = norm(phi_an(full_x(index:end)) - full_y(index:end))/norm(full_y(index:end));
-fprintf("norm two error between data and analytical fit: %d \n", error)
+fprintf("norm two error between data and analytical fit: %.5f \n", error)
+
+[franken_x, franken_y] = combine_data(full_x, full_y, index, phi_an);
 
 if(process_data_switch == 1)
-    [franken_x, franken_y] = process_data(index, full_x, full_y, phi_an, spin_switch); %creates processed version of full_x and full_y, franken_x and franken_y respectively
+    [franken_x, franken_y] = process_data(franken_x, franken_y, spin_switch); %creates processed version of full_x and full_y, franken_x and franken_y respectively
 end 
 
 
@@ -54,12 +63,14 @@ x = h*(1:N_f)'-L/2;  %Defining x (or t) domain for function
 
 [signal] = torque_solver(N_f, gamma, w_0, L, franken_y); %produces torque using FFT to IFFT
 
+torque_intergal = trapz(franken_x, signal);
+fprintf("Intergral of Torque Signal is approximately %.2f \n", torque_intergal)
 
 % Going backwards
 phi_gen = phi_from_torque(N_f, full_x, signal, gamma, w_0); %generates phi from analytical torque using ODE45
 
 error1 = norm(phi_gen(1:index) - full_y(1:index))/norm(full_y(1:index));
-fprintf("norm two error of original data and output using solved torque: %d \n", error1)
+fprintf("norm two error of original data and output using solved torque: %.5f \n", error1)
 
 
 
