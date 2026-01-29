@@ -66,22 +66,8 @@ x = h*(1:N_f)'-L/2;  %Defining x (or t) domain for function
 torque_intergal = trapz(franken_x, signal);
 fprintf("Intergral of Torque Signal is approximately %.2f \n", torque_intergal)
 
-%%
-figure(5)
-hold on
-cumtrap_output = cumtrapz(franken_x(N_f/2:end), signal(N_f/2:end));
-p = plot(franken_x(N_f/2:end), cumtrap_output,'Color',[227/255,159/255,246/255] );
 
-max_trap = max(cumtrap_output);
-index_of_max = find(cumtrap_output==max_trap);
 
-datatip(p,franken_x(N_f/2 + index_of_max), max_trap, 'Location', 'northwest'); 
-xlabel("$$t$$")
-title('Cummulative Integral of Torque Signal')
-ylabel('$$\int_0^t \tau(t)$$')
-xlim([0,70])
-ylim([min(cumtrap_output - 10), max(cumtrap_output + 200)])
-hold off
 %%
 
 
@@ -99,7 +85,7 @@ if(plot_switch == 1)
     plot_settings(plot_switch)
     plot_analytical_solution(full_x, full_y, peak_index, x_peaks, y_peaks, phi_an, spin_switch) %plots analytical solution
     plot_processed_data(franken_x, franken_y) %plots the processed data 
-    plot_torque(franken_x, signal) %plots data from torque
+    plot_torque(franken_x, signal, N_f) %plots data from torque
     plot_phi_from_torque(full_x, full_y, phi_gen, spin_switch) %plots generated phi
 end
 
