@@ -3,7 +3,7 @@ clear all
 
 %% User Inputs
 plot_switch = 1; %switches on plots (1) or no plots (0)
-spin_switch = 0; %reads reverse (0) or forward (1) data
+spin_switch = 1; %reads reverse (0) or forward (1) data
 fit_switch = 1; %fits data using estimates (1) or no fit after estimates (0)
 process_data_switch = 0; %process data (1) or not (0) (no option to not process data right now)
 
@@ -65,6 +65,27 @@ x = h*(1:N_f)'-L/2;  %Defining x (or t) domain for function
 
 torque_intergal = trapz(franken_x, signal);
 fprintf("Intergral of Torque Signal is approximately %.2f \n", torque_intergal)
+
+%%
+figure(5)
+hold on
+cumtrap_output = cumtrapz(franken_x(N_f/2:end), signal(N_f/2:end));
+p = plot(franken_x(N_f/2:end), cumtrap_output,'Color',[227/255,159/255,246/255] );
+
+max_trap = max(cumtrap_output);
+index_of_max = find(cumtrap_output==max_trap);
+
+datatip(p,franken_x(N_f/2 + index_of_max), max_trap, 'Location', 'northwest'); 
+xlabel("$$t$$")
+title('Cummulative Integral of Torque Signal')
+ylabel('$$\int_0^t \tau(t)$$')
+xlim([0,70])
+ylim([min(cumtrap_output - 10), max(cumtrap_output + 200)])
+hold off
+%%
+
+
+fprintf("Cummulative Intergral of Torque Signal is approximately %.2f \n", torque_intergal)
 
 % Going backwards
 phi_gen = phi_from_torque(N_f, full_x, signal, gamma, w_0); %generates phi from analytical torque using ODE45
