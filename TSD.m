@@ -3,7 +3,7 @@ clear all
 
 %% User Inputs
 plot_switch = 1; %switches on plots (1) or no plots (0)
-spin_switch = 1; %reads reverse (0) or forward (1) data
+spin_switch = 0; %reads reverse (0) or forward (1) data
 fit_switch = 1; %fits data using estimates (1) or no fit after estimates (0)
 process_data_switch = 0; %process data (1) or not (0) (no option to not process data right now)
 
