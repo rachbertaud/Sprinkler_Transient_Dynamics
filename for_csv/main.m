@@ -2,10 +2,10 @@ clear
 
 
 %% User Inputs
-plot_switch = 0; %switches on plots (1) or no plots (0)
+plot_switch = 1; %switches on plots (1) or no plots (0)
 fit_switch = 1; %fits data using estimates (1) or no fit after estimates (0)
 process_data_switch = 0; %process data (1) or not (0)
-data_dir = "C:\Users\berta\code\TSD_Data\";
+data_dir = "/Users/rachelbertaud/code/Sprinkler_Data/";
 spin_dir = "forward";
 Re = "500";
 num_trials = 3;
@@ -18,7 +18,6 @@ for trial_num = 1:1:num_trials
     
     [spin_switch, Re, trial] = read_name(data_name);
     
-    
     %reads data from figure and outputs:
     % full data (full_x, full_y) 
     % peak data (x_peaks, y_peaks)
@@ -26,8 +25,6 @@ for trial_num = 1:1:num_trials
     % the index (index) where the peak index of interest (peak_index) occurs in full data set
     % the full data set at and after the peak index of interest (x_seg, y_seg) 
     [full_x, full_y, x_peaks, y_peaks, N, index, peak_index,  x_seg, y_seg] = read_data(fname, t_target);
-    
-    
     
     %Estimates period of function (Omega_est) after peak index using x_peaks 
     
@@ -52,7 +49,6 @@ for trial_num = 1:1:num_trials
     
     %Prints relative error between analytical solution and data
     error = norm(phi_an(full_x(index:end)) - full_y(index:end))/norm(full_y(index:end));
-    fprintf("norm two error between data and analytical fit: %.5f \n", error)
     
     
     [franken_x, franken_y] = combine_data(full_x, full_y, index, phi_an);
@@ -60,29 +56,15 @@ for trial_num = 1:1:num_trials
     L = franken_x(end) - franken_x(1); %Determines length of domain
     h = L/N_f; %determines spacing of dx to get number of points we want on domain
     
-    
-    
-    
     [signal] = torque_solver(N_f, gamma, w_0, L, franken_y); %produces torque using FFT to IFFT
 
-    
-    
-    torque_intergal = trapz(franken_x, signal);
-    fprintf("Intergral of Torque Signal is approximately %.2f \n", torque_intergal)
-    
-    
-    
-    %%
-    
-    
-    fprintf("Cummulative Intergral of Torque Signal is approximately %.2f \n", torque_intergal)
+    torque_integral = trapz(franken_x, signal);
     
     % Going backwards
     new_x = franken_x(N_f/2:end);
     new_y = franken_y(N_f/2:end);
     new_sig = signal(N_f/2:end);
     phi_gen = phi_from_torque(N_f, new_x, signal, gamma, w_0, index); %generates phi from analytical torque using ODE45
-    
     
     [folder, name, ~] = fileparts(fname);
     outfile = fullfile(folder, char(name + "_torque_signal.csv"));
@@ -93,16 +75,25 @@ for trial_num = 1:1:num_trials
     writetable(T, outfile);
 
     error1 = norm(phi_gen(1:index) - full_y(1:index))/norm(full_y(1:index));
-    fprintf("norm two error of original data and output using solved torque: %.5f \n", error1)
-    
+
+    % --- Per-trial summary ---
+    if spin_switch == 1, spin_label = 'Forward'; else, spin_label = 'Reverse'; end
+    div = repmat('-', 1, 50);
+    fprintf('\n%s\n',   div)
+    fprintf('  Trial %d  |  %s  |  Re = %.0f\n', trial_num, spin_label, Re)
+    fprintf('%s\n',     div)
+    fprintf('  Fit error    (phi_an vs. data)  :  %.5f\n', error)
+    fprintf('  Torque integral                 :  %.4f\n',  torque_integral)
+    fprintf('  Recon. error  (ODE45 vs. data)  :  %.5f\n', error1)
+    fprintf('%s\n',     div)
     
     
     if(plot_switch == 1)
         plot_settings(plot_switch)
-        %plot_analytical_solution(full_x, full_y, peak_index, x_peaks, y_peaks, phi_an, spin_switch, trial_num, Re)        
-        %plot_processed_data(franken_x, franken_y) %plots the processed data 
-        plot_torque(franken_x, signal, N_f) %plots data from torque
-        plot_phi_from_torque(new_x, new_y, phi_gen, spin_switch) %plots generated phi
+        plot_analytical_solution(full_x, full_y, peak_index, x_peaks, y_peaks, phi_an, spin_switch, trial_num, Re, num_trials)
+        plot_processed_data(franken_x, franken_y, trial_num, num_trials)
+        plot_torque(franken_x, signal, N_f, trial_num, num_trials)
+        plot_phi_from_torque(new_x, new_y, phi_gen, spin_switch, trial_num, num_trials)
     end
 
 end

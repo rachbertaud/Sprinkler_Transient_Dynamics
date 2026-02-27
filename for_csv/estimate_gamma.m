@@ -22,7 +22,7 @@ function gamma = estimate_gamma(peak_index, x_peaks, y_peaks)
         dependent='y', independent='x',...
         coefficients='gamma');
     options = fitoptions(exp_fit_type);
-    % options.StartPoint = 0.5;
+    options.StartPoint = 0.5;
     exp_fit = fit(x_gamma', y_gamma', exp_fit_type, options);
     
     %Pull/solve data from fits

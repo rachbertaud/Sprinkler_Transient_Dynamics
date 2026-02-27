@@ -1,9 +1,6 @@
 function phi_gen = phi_from_torque(N_f, full_x, signal, gamma, w_0, index)
 
     signal_chunk = signal(N_f/2:end); %signal from 0 to end of full_x
-    
-    length(signal_chunk)
-    length(full_x)
 
     y0 = [0; 0]; %IC for y and y'
     
