@@ -35,7 +35,7 @@ With γ and ω, we go back to the full forced ODE and solve for τ(t) spectrally
 
 The ODE can be written as a convolution in the time domain:
 
-$$\phi(t) = \int G(t - s)\,\tau(s)\,ds$$
+$$\phi(t) = \int G(t - s) \ \tau(s) \ ds$$
 
 where $G$ is the Green's function of the system. In Fourier space, convolution becomes multiplication:
 
@@ -57,9 +57,9 @@ Since we know $\hat{G}$ and we can compute $\hat{\phi}$ from our data, we can so
 
 $$\hat{\tau} = \frac{\hat{\phi}}{\hat{G}}$$
 
-$$\tau = \text{IFFT}\!\left(\frac{\text{FFT}(\phi)}{\hat{G}}\right)$$
+$$\tau = \text{IFFT} \ \left(\frac{\text{FFT}(\phi)}{\hat{G}}\right)$$
 
-### Step 3 — Verify
+### Step 3 — Verification
 
 To check the result, we plug τ(t) back into the ODE and solve it forward with `ode45`. If the reconstructed φ(t) matches the original data, the recovery worked.
 
