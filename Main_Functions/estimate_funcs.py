@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import curve_fit
 
-def est_period(peak_index, t_insert, t_peaks):
+def est_omega_d(peak_index, t_insert, t_peaks):
 
     # determine where the nearest peak is to where we want to insert the data
     insert_near_peak = np.argmin(np.abs(t_peaks - t_insert))
@@ -17,9 +17,9 @@ def est_period(peak_index, t_insert, t_peaks):
     #print("Mean: ", np.mean(period_est))
     
     #estimates period!
-    period_est = (2*np.pi)/np.mean(period_est)
+    omega_d = (2*np.pi)/np.mean(period_est)
     
-    return period_est
+    return omega_d
 
 # def est_gamma(peak_index, t_peaks, y_peaks):
 #     # picks every other peak from peak index to end
@@ -80,7 +80,8 @@ def fit_phi(t_seg, y_seg, gamma, w_0, c1, c2, t0):
         return np.exp(-gamma * (t - t0)) * (c1 * np.cos(wd * (t - t0)) + c2 * np.sin(wd * (t - t0)))
 
     p0 = [gamma, w_0, c1, c2]
-    popt, _ = curve_fit(ode_model, t_seg, y_seg, p0=p0)
+    bounds = ([0, 0, -np.inf, -np.inf], [np.inf, np.inf, np.inf, np.inf])
+    popt, _ = curve_fit(ode_model, t_seg, y_seg, p0=p0, bounds=bounds)
 
     gamma, w_0, c1, c2 = popt
     return gamma, w_0, c1, c2

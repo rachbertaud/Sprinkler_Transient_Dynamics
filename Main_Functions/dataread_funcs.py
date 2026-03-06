@@ -67,7 +67,7 @@ def fit_segments(full_t, full_y, t_peaks, t_target, t_insert):
     insert_index = np.argmin(np.abs(full_t - t_insert))
     index = np.where(full_t == t_peaks[peak_index])[0][0]
     
-    t_seg = full_t[index:]
-    y_seg = full_y[index:]
+    t_seg = full_t[index:insert_index]
+    y_seg = full_y[index:insert_index]
     
     return index, peak_index, insert_index, t_seg, y_seg    

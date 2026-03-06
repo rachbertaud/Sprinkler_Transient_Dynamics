@@ -26,20 +26,35 @@ def plot_analytical(full_t, full_y, y_fit, index):
 
 
 def plot_franken(franken_t, franken_y, full_t, index, t_end):
-    n_neg = len(franken_t) - len(full_t[:index]) - len(t_end)
+    checker = False
+    if(len(t_end) == 2048):
+        checker = True
+        n_neg = 2048
+    else:
+        n_neg = len(franken_t) - len(full_t[:index]) - len(t_end)
+        
 
     t_zeros = franken_t[:n_neg]
-    t_orig  = franken_t[n_neg:n_neg + index]
-    t_tail  = franken_t[n_neg + index:]
+    
+    if checker:
+        t_orig  = franken_t[n_neg:n_neg + index]
+        t_tail  = franken_t[n_neg + index:]
+    else:
+        t_orig = franken_t[2048:4096]
 
     y_zeros = franken_y[:n_neg]
-    y_orig  = franken_y[n_neg:n_neg + index]
-    y_tail  = franken_y[n_neg + index:]
+    
+    if checker:
+        y_orig  = franken_y[n_neg:n_neg + index]
+        y_tail  = franken_y[n_neg + index:]
+    else:
+        y_orig = franken_y[2048:4096]
 
     plt.figure()
     plt.plot(t_zeros, y_zeros, color='cornflowerblue', linewidth=2, label='added zeros')
     plt.plot(t_orig,  y_orig,  color='hotpink',        linewidth=2, label='original data')
-    plt.plot(t_tail,  y_tail,  color='mediumpurple',   linewidth=2, label='analytical tail')
+    if checker:
+        plt.plot(t_tail,  y_tail,  color='mediumpurple',   linewidth=2, label='analytical tail')
     plt.legend()
     plt.xlabel('t')
     plt.ylabel('y')

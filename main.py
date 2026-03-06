@@ -30,7 +30,7 @@ fit_switch = 1
 
 # processes the data before forcing and after forcing to remove noise (1)
 # or uses raw data (0)
-proc_data_switch = 1
+proc_data_switch = 0
 
 # define the spin direction of data to use
 # reads from data file name, i.e. for "forward_500_trail1" put "forward" here
@@ -38,7 +38,7 @@ spin_dir = "forward"
 
 # define reynolds number of data to use
 # reads from data file name, i.e. for "forward_500_trail1" put "500" here 
-re = "500"
+re = "1000"
 
 # define trail number  of data to use
 # reads from data file name, i.e. for "forward_500_trail1" put "1" here 
@@ -52,12 +52,16 @@ data_dir = "/Users/rachelbertaud/code/Sprinkler_Data/"
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
+
+# enters path where the function files are 
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Main_Functions'))
 
 # DATA READ FUNCS
 from dataread_funcs import read_name, read_data, plot_data, fit_segments
 
 # ESTIMATE FUNCS
-from estimate_funcs import est_period, est_gamma, get_constants, fit_phi
+from estimate_funcs import est_omega_d, est_gamma, get_constants, fit_phi
 
 # PROCESS FUNCS
 from process_funcs import combine_data, remove_noise
@@ -100,21 +104,26 @@ index, peak_index, insert_index, t_seg, y_seg = fit_segments(full_t, full_y, t_p
 ###################################################################################################
 
 # estimates period from data
-period_est = est_period(peak_index, t_insert, t_peaks)
+omega_d = est_omega_d(peak_index, t_insert, t_peaks)
 
 # estimates gamma from data
 gamma_est = est_gamma(peak_index, t_peaks, y_peaks)
-print("Estimate of gamma: ", gamma_est)
+
 
 # estimate omega from period and gamma
-omega_est = np.sqrt((period_est*period_est) + (gamma_est*gamma_est))
-print("Estimate of omega: ", omega_est)
+omega_est = np.sqrt((omega_d*omega_d) + (gamma_est*gamma_est))
 
 # gets constants for ODE using ours estimates for gamma and omega
 # given fit t value
 c1_est, c2_est = get_constants(gamma_est, omega_est, full_y[index])
+
+print("------------------------------")
+print("Estimate of gamma: ", gamma_est)
+print("Estimate of omega: ", omega_est)
 print("Estimate of c1: ", c1_est)
 print("Estimate of c2: ", c2_est)
+print("------------------------------")
+
 # if user wants a fit...
 if(fit_switch == 1):
     # fit the data
@@ -125,18 +134,23 @@ else:
     omega = omega_est
     c1 = c1_est
     c2 = c2_est
-
+    
+print("------------------------------")
 print("Gamma final: ", gamma)
 print("Omega final: ", omega)
 print("c1 final: ", c1)
 print("c2 final: ", c2)
+print("------------------------------")
+
 # define the analytical solution in terms of new found values
 def phi_an(t):
     t0 = t_peaks[peak_index]
     wd = np.sqrt(omega**2 - gamma**2)
     return np.exp(-gamma * (t - t0)) * (c1 * np.cos(wd * (t - t0)) + c2 * np.sin(wd * (t - t0)))
 
-error = np.linalg.norm(phi_an(full_t[index:insert_index]) - full_y[index:insert_index]) / np.linalg.norm(full_y[index:insert_index])
+#error = np.linalg.norm(phi_an(full_t[index:insert_index]) - full_y[index:insert_index]) / np.linalg.norm(full_y[index:insert_index])
+error = np.linalg.norm(phi_an(full_t[index:]) - full_y[index:], 2) / np.linalg.norm(full_y[index:], 2)
+
 print("Error of Analytical Fit: ", error)
 
 if(plot_switch == 1):
@@ -147,9 +161,9 @@ if(plot_switch == 1):
 ###################################################################################################
 
 if(proc_data_switch == 1):
-    franken_y = remove_noise(full_t, full_y, threshold=1)
+    full_y = remove_noise(full_t, full_y, threshold=1)
 
-franken_t, franken_y, t_end = combine_data(full_t, full_y, index, phi_an)
+franken_t, franken_y, t_end = combine_data(full_t, full_y, index, phi_an, proc_data_switch)
 
 if(plot_switch == 1):
     plot_franken(franken_t, franken_y, full_t, index, t_end)
@@ -175,4 +189,4 @@ new_sig = signal[N_f//2:]
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
 
 if(plot_switch == 1):
-    plot_phi_gen(full_t, full_y, phi_gen)
+    plot_phi_gen(new_t, new_y, phi_gen)
