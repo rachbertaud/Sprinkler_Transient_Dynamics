@@ -8,7 +8,7 @@ function [spin_switch, Re, trial] = read_name(data_name)
     % Extract each part
     if parts{1} == "forward"
         spin_switch = 1;
-    elseif parts{1} == "reverse"
+    elseif parts{1} == "rev"
         spin_switch = 0;
     else
         error("Invalid direction '%s' in file name - please use 'forward' or 'reverse'", parts{1});

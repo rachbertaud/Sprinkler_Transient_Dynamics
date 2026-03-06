@@ -8,8 +8,8 @@ process_data_switch = 0; %process data (1) or not (0)
 data_dir = "/Users/rachelbertaud/code/Sprinkler_Data/";
 spin_dir = "forward";
 Re = "500";
-num_trials = 3;
-t_target = 48; %target time for fit
+num_trials = 1;
+t_target = 46; %target time for fit 48 for forward
 %% Main Code
 
 for trial_num = 1:1:num_trials
