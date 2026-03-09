@@ -67,7 +67,7 @@ from estimate_funcs import est_omega_d, est_gamma, get_constants, fit_phi
 from process_funcs import combine_data, remove_noise
 
 # PLOT FUNCTIONS
-from plot_funcs import plot_analytical, plot_franken, plot_phi_gen
+from plot_funcs import plot_analytical, plot_franken, plot_phi_gen, plot_torque
 
 from fft_funcs import torque_solver, phi_from_torque
 
@@ -79,16 +79,18 @@ os.chdir(data_dir)
 fname = spin_dir + "_" + re + "_trial" + str(trial_num) + ".csv"
 # fname = data_name
 
+print("------------------------------")
+print("Data coming from ", fname, " in directory ", data_dir)
+if(fit_switch == 1):
+    print("Data is being fit!")
+if(proc_data_switch == 1):
+    print("Data is being processed!")
+
 # define values from user define inputs
 spin_switch, re, trial = read_name(fname)
 
 # read data for x,y data, get size of data, and find peaks of data
 full_t, full_y, N, t_peaks, y_peaks = read_data(fname)
-
-#plt.plot(full_t, full_y)
-#plt.scatter(t_peaks, y_peaks, s=200, facecolors='none',
-#               edgecolors='limegreen', linewidths=2.5)
-#plt.show()
 
 # lets user look at plot and define fitting target
 t_target = plot_data(full_t, full_y, 1)
@@ -118,16 +120,27 @@ omega_est = np.sqrt((omega_d*omega_d) + (gamma_est*gamma_est))
 c1_est, c2_est = get_constants(gamma_est, omega_est, full_y[index])
 
 print("------------------------------")
+print("-----ESTIMATES FROM PEAKS-----")
+print("------------------------------")
 print("Estimate of gamma: ", gamma_est)
 print("Estimate of omega: ", omega_est)
 print("Estimate of c1: ", c1_est)
 print("Estimate of c2: ", c2_est)
-print("------------------------------")
 
 # if user wants a fit...
 if(fit_switch == 1):
     # fit the data
     gamma, omega, c1, c2 = fit_phi(t_seg, y_seg, gamma_est, omega_est, c1_est, c2_est, full_t[index])
+    print("------------------------------")
+    print("-------VALUES AFTER FIT-------")
+    print("------------------------------")
+    print("Gamma: ", gamma)
+    print("Omega: ", omega)
+    print("c1: ", c1)
+    print("c2: ", c2)
+    print("------------------------------")
+    
+
 else:
     # set end values as estimates
     gamma = gamma_est
@@ -135,26 +148,11 @@ else:
     c1 = c1_est
     c2 = c2_est
     
-print("------------------------------")
-print("Gamma final: ", gamma)
-print("Omega final: ", omega)
-print("c1 final: ", c1)
-print("c2 final: ", c2)
-print("------------------------------")
-
 # define the analytical solution in terms of new found values
 def phi_an(t):
     t0 = t_peaks[peak_index]
     wd = np.sqrt(omega**2 - gamma**2)
     return np.exp(-gamma * (t - t0)) * (c1 * np.cos(wd * (t - t0)) + c2 * np.sin(wd * (t - t0)))
-
-#error = np.linalg.norm(phi_an(full_t[index:insert_index]) - full_y[index:insert_index]) / np.linalg.norm(full_y[index:insert_index])
-error = np.linalg.norm(phi_an(full_t[index:]) - full_y[index:], 2) / np.linalg.norm(full_y[index:], 2)
-
-print("Error of Analytical Fit: ", error)
-
-if(plot_switch == 1):
-    plot_analytical(full_t, full_y, phi_an(full_t), index)
 
 
 # SECTION THREE - CLEANS NOISE FROM DATA
@@ -165,8 +163,6 @@ if(proc_data_switch == 1):
 
 franken_t, franken_y, t_end = combine_data(full_t, full_y, index, phi_an, proc_data_switch)
 
-if(plot_switch == 1):
-    plot_franken(franken_t, franken_y, full_t, index, t_end)
 
 # SECTION FOUR - FOURIER TRANSFORM
 ###################################################################################################
@@ -189,4 +185,8 @@ new_sig = signal[N_f//2:]
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
 
 if(plot_switch == 1):
+    plot_analytical(full_t, full_y, phi_an(full_t), index)
+    plot_franken(franken_t, franken_y, full_t, index, t_end)
+    plot_torque(franken_t, signal)
     plot_phi_gen(new_t, new_y, phi_gen)
+    plt.show()

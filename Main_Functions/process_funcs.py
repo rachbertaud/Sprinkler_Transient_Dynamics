@@ -15,7 +15,7 @@ def combine_data(full_t, full_y, index, phi_an, proc_data_switch):
         n_end = 2048 - len(full_t[:index])
         t_end = np.linspace(spot + dt, spot + dt * n_end, n_end)
     else:
-        t_end = full_t[:2048]
+        t_end = None
     
     if(proc_data_switch == 1):
         # define negative t

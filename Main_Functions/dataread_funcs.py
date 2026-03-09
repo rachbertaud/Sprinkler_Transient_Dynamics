@@ -54,9 +54,9 @@ def plot_data(t_data, y_data, flag):
 
     slider.on_changed(update)
     if(flag == 1):
-        plt.title("Please use slider to pick time to fit data at. Exit plot once done.")
+        plt.title("Please use slider to pick time to start data fit. Exit plot once done.")
     else:
-        plt.title("Please use slider to pick time to insert analytical data for Fourier transform.")
+        plt.title("Please use slider to pick time to end data fit. Exit plot once done.")
     plt.show()
 
     return slider.val  # returns the final value when window is closed
