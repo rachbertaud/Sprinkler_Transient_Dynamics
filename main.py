@@ -16,7 +16,7 @@
         5. Does a forward ODE solve using the extracted torquue signal to verify the results
         6. Saves extracted torque signal to data directory in .csv format and plots results of code!
 
-    All sections of this code are clearly labelled as step 0, 1, 2, 3, 4, or 5 for
+    All sections of this code are clearly labelled as above for
     process trasparency.
 '''
 
@@ -186,7 +186,7 @@ new_t   = franken_t[N_f//2:]
 new_y   = franken_y[N_f//2:]
 new_sig = signal[N_f//2:]
 
-# SECTION FIVE - 
+# SECTION FIVE - DO FORWARD PROBLEM WITH TORQUE SIGNAL
 ###################################################################################################
 
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
