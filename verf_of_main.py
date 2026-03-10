@@ -1,21 +1,19 @@
 '''
     Written by Rachel Bertaud during PhD at Colroado School of Mines, 2026
-    
-    To analyze the transient behavior of the sprinkler, it is imperitive to know
-    the natural frequency (omega) and the damping coefficent (gammma) of the system.
-    By assuming that the tail of the measured angular position data of the sprinkler
-    fits the ODE for a damped, hormoic oscillator, we have found a method to find
-    those values, and use them to extract the torque signal of the system.
+
+    This code assumes we know what omega and gamma are, then goes through the process of main
+    to verify our code.
     
     This code:
-        0. Read user defined inputs that control outputs
+        0. Creates angular position data that we produce from a noisy square wave and known
+            values of omega and gamma.
         1. Reads in angular position data in csv format and request fit time from user
         2. Estimates omega (natural frequency) and gamma (damping coefficent)
         3. Cleans noise from the data before and after forcing
         4. Uses Fourier tranforms to produce the torque signal for the data
-        5. Does a forward ODE solve using the extracted torquue signal to verify the results
-        6. Saves extracted torque signal to data directory in .csv format and plots results of code!
-
+        5. Does a forward ODE solve using the extracted torque signal
+        6. Compares the results of the code to the known values.
+        
     All sections of this code are clearly labelled as above for
     process trasparency.
 '''
@@ -36,20 +34,10 @@ fit_switch = 1
 # or uses raw data (0)
 proc_data_switch = 0
 
-# define the spin direction of data to use
-# reads from data file name, i.e. for "forward_500_trail1" put "forward" here
-spin_dir = "forward"
-
-# define reynolds number of data to use
-# reads from data file name, i.e. for "forward_500_trail1" put "500" here 
-re = "1000"
-
-# define trail number  of data to use
-# reads from data file name, i.e. for "forward_500_trail1" put "1" here 
-trial_num = 1
-
-# define where data is stored on local machine
-data_dir = "/Users/rachelbertaud/code/Sprinkler_Data/"
+gamma = 0.345
+omega = 7.412
+N = int(2048)
+tau_mag = 100
 
 
 # DEFINE DEPENDENCIES AND UDFs
@@ -59,10 +47,10 @@ import numpy as np
 import sys
 
 # enters path where the function files are 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'Main_Functions'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Verf_Functions'))
 
-# DATA READ FUNCS
-from dataread_funcs import read_name, read_data, plot_data, fit_segments
+# MAKE TAU AND PHI FUNCS
+from construct_funcs import square_wave
 
 # ESTIMATE FUNCS
 from estimate_funcs import est_omega_d, est_gamma, get_constants, fit_phi
@@ -79,19 +67,19 @@ from fft_funcs import torque_solver, phi_from_torque
 # SECTION ONE - READ ANGULAR POSITION DATA AND REQUEST FIT LOCATION
 ###################################################################################################
 
-os.chdir(data_dir)
-data_name = spin_dir + "_" + re + "_trial" + str(trial_num)
-fname = data_name + ".csv"
-
-print("------------------------------")
-print("Data coming from ", fname, " in directory ", data_dir)
 if(fit_switch == 1):
     print("Data is being fit!")
 if(proc_data_switch == 1):
     print("Data is being processed!")
 
-# define values from user define inputs
-spin_switch, re, trial = read_name(fname)
+t = np.linspace(0,N,N)*0.033
+
+tau = square_wave(tau_mag, t, 11, 23)
+
+plt.plot(t, tau)
+plt.show()
+
+
 
 # read data for x,y data, get size of data, and find peaks of data
 full_t, full_y, N, t_peaks, y_peaks = read_data(fname)
