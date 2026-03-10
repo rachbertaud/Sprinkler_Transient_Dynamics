@@ -1,25 +1,24 @@
 '''
     Written by Rachel Bertaud during PhD at Colroado School of Mines, 2026
-
-    This code assumes we know what omega and gamma are, then goes through the process of main
-    to verify our code.
+    
+    To analyze the transient behavior of the sprinkler, it is imperitive to know
+    the natural frequency (omega) and the damping coefficent (gammma) of the system.
+    By assuming that the tail of the measured angular position data of the sprinkler
+    fits the ODE for a damped, hormoic oscillator, we have found a method to find
+    those values, and use them to extract the torque signal of the system.
     
     This code:
-        0. Creates angular position data that we produce from a noisy square wave and known
-            values of omega and gamma.
+        0. Read user defined inputs that control outputs
         1. Reads in angular position data in csv format and request fit time from user
         2. Estimates omega (natural frequency) and gamma (damping coefficent)
         3. Cleans noise from the data before and after forcing
         4. Uses Fourier tranforms to produce the torque signal for the data
-        5. Does a forward ODE solve using the extracted torque signal
-        6. Compares the results of the code to the known values.
-        
+        5. Does a forward ODE solve using the extracted torquue signal to verify the results
+        6. Saves extracted torque signal to data directory in .csv format and plots results of code!
+
     All sections of this code are clearly labelled as above for
     process trasparency.
-
-    Notes for rachel: since its so fast, maybe go through and have it pick the best points to fit at - this would be pretty expensive perhaps.
 '''
-
 
 # SECTION ZERO - USER DEFINED INPUTS
 ###################################################################################################
@@ -37,12 +36,20 @@ fit_switch = 1
 # or uses raw data (0)
 proc_data_switch = 0
 
-gamma_exact = 0.345
-omega_exact = 7.412
-N = int(2048)
-tau_mag = 100
-start_sq = 11
-end_sq = 23
+# define the spin direction of data to use
+# reads from data file name, i.e. for "forward_500_trail1" put "forward" here
+spin_dir = "forward"
+
+# define reynolds number of data to use
+# reads from data file name, i.e. for "forward_500_trail1" put "500" here 
+re = "1000"
+
+# define trail number  of data to use
+# reads from data file name, i.e. for "forward_500_trail1" put "1" here 
+trial_num = 1
+
+# define where data is stored on local machine
+data_dir = "/Users/rachelbertaud/code/Sprinkler_Data/"
 
 
 # DEFINE DEPENDENCIES AND UDFs
@@ -50,15 +57,12 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from scipy.signal import find_peaks
 
 # enters path where the function files are 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'Verf_Functions'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Main_Functions'))
 
-from dataread_funcs import plot_data, fit_segments
-
-# MAKE TAU
-from construct_funcs import square_wave, error
+# DATA READ FUNCS
+from dataread_funcs import read_name, read_data, plot_data, fit_segments
 
 # ESTIMATE FUNCS
 from estimate_funcs import est_omega_d, est_gamma, get_constants, fit_phi
@@ -69,51 +73,28 @@ from process_funcs import combine_data, remove_noise
 # PLOT FUNCTIONS
 from plot_funcs import plot_analytical, plot_franken, plot_phi_gen, plot_torque
 
-from fft_funcs import torque_solver, phi_from_torque, phi_from_torque_new
+from fft_funcs import torque_solver, phi_from_torque
 
 
 # SECTION ONE - READ ANGULAR POSITION DATA AND REQUEST FIT LOCATION
 ###################################################################################################
 
+os.chdir(data_dir)
+data_name = spin_dir + "_" + re + "_trial" + str(trial_num)
+fname = data_name + ".csv"
+
+print("------------------------------")
+print("Data coming from ", fname, " in directory ", data_dir)
 if(fit_switch == 1):
     print("Data is being fit!")
 if(proc_data_switch == 1):
     print("Data is being processed!")
 
-# define a time interval with same stepping as real data 
-t = np.linspace(0,N,N)*0.033
-t = np.array(t)
-
-# define q square wave we know stuff about!!! This squ
-tau = square_wave(tau_mag, t, start_sq, end_sq)
-tau_int_exact = (end_sq - start_sq)*tau_mag
-
-# Plot square wave!
-plt.plot(t, tau, color='pink')
-plt.title("User Defined Square Wave")
-plt.show()
-
-phi_exact = phi_from_torque_new(t, tau, gamma_exact, omega_exact)
-
-plt.plot(t, phi_exact, color='pink')
-plt.title("User Define Phi Data")
-plt.show()
-
-##########################################################
+# define values from user define inputs
+spin_switch, re, trial = read_name(fname)
 
 # read data for x,y data, get size of data, and find peaks of data
-full_t = t
-full_y = phi_exact
-
-#find peaks using function form scipy.signal
-loc, _ = find_peaks(np.abs(full_y))
-t_peaks = full_t[loc]
-y_peaks = full_y[loc]
-
-#plt.plot(full_t, full_y)
-#plt.scatter(t_peaks, y_peaks, s=200, facecolors='none',
-#               edgecolors='limegreen', linewidths=2.5)
-#plt.show()
+full_t, full_y, N, t_peaks, y_peaks = read_data(fname)
 
 # lets user look at plot and define fitting target
 t_target = plot_data(full_t, full_y, 1)
@@ -145,8 +126,10 @@ c1_est, c2_est = get_constants(gamma_est, omega_est, full_y[index])
 print("------------------------------")
 print("-----ESTIMATES FROM PEAKS-----")
 print("------------------------------")
-print("Estimate of gamma: ", gamma_est, ", Error from exact = ", error(gamma_est, gamma_exact, 0))
-print("Estimate of omega: ", omega_est, ", Error from exact = ", error(omega_est, omega_exact, 0))
+print("Estimate of gamma: ", gamma_est)
+print("Estimate of omega: ", omega_est)
+print("Estimate of c1: ", c1_est)
+print("Estimate of c2: ", c2_est)
 
 # if user wants a fit...
 if(fit_switch == 1):
@@ -155,8 +138,10 @@ if(fit_switch == 1):
     print("------------------------------")
     print("-------VALUES AFTER FIT-------")
     print("------------------------------")
-    print("Gamma: ", gamma, ", Error from exact = ", error(gamma, gamma_exact, 0))
-    print("Omega: ", omega, ", Error from exact = ", error(omega, omega_exact, 0))
+    print("Gamma: ", gamma)
+    print("Omega: ", omega)
+    print("c1: ", c1)
+    print("c2: ", c2)
     print("------------------------------")
     
 
@@ -172,17 +157,6 @@ def phi_an(t):
     t0 = t_peaks[peak_index]
     wd = np.sqrt(omega**2 - gamma**2)
     return np.exp(-gamma * (t - t0)) * (c1 * np.cos(wd * (t - t0)) + c2 * np.sin(wd * (t - t0)))
-
-err_an = error(phi_an(t[index:]), phi_exact[index:], 1)
-print("Error of analytical case:", err_an)
-
-#plt.plot(full_t[index:], error_full, color='purple')
-#plt.title("Relative Absolute Error on Tail")
-#plt.show()
-
-
-#print("Error of Analytical Fit: ", error)
-
 
 
 # SECTION THREE - CLEANS NOISE FROM DATA
@@ -204,9 +178,6 @@ h = L/N_f
 # outputs extracted torque signal
 signal = torque_solver(N_f, gamma, omega, L, franken_y)
 
-err_sig = error(signal[N_f//2:], tau, 1)
-print("Error of signal = ", err_sig)
-
 # calculates torque signal integral
 torque_integral = np.trapezoid(signal, franken_t)
 
@@ -220,24 +191,18 @@ new_sig = signal[N_f//2:]
 
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
 
-err_for = error(phi_gen, phi_exact, 1)
-print("Error of Forward Case:", err_for)
-
-
-#error_gen = np.linalg.norm(phi_gen[:index] - new_y[:index], 2) / np.linalg.norm(new_y[:index], 2)
-#print("Error of Transient Phase Recovery: ", error_gen)
-
-#error_two = np.linalg.norm(phi_gen - new_y, 2) / np.linalg.norm(new_y, 2)
-#print("Error for full phi recovery :", error_two)
-
-#wtf = np.abs(phi_gen[:index] - new_y[:index])/(np.abs(new_y[:index]) + 1e-4)
-
-#plt.plot(new_t[:index], wtf)
-#plt.show()
-
-
 # SECTION SIX - SAVE SIGNAL AND PLOT RESULTS
 ###################################################################################################
+
+if(write_t == 1):
+    out_fname = data_name + "_signal.csv"
+    out_path = os.path.join(data_dir, out_fname)
+    if os.path.exists(out_path):
+        os.remove(out_path)
+        print("Existing file removed: ", out_path)
+    np.savetxt(out_path, np.column_stack([franken_t[N_f//2:], np.real(signal[N_f//2:])]),
+           delimiter=',', header='t,torque_signal', comments='')
+    print("Signal saved to: ", out_path)
 
 if(plot_switch == 1):
     plot_analytical(full_t, full_y, phi_an(full_t), index)
