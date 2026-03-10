@@ -96,6 +96,11 @@ spin_switch, re, trial = read_name(fname)
 # read data for x,y data, get size of data, and find peaks of data
 full_t, full_y, N, t_peaks, y_peaks = read_data(fname)
 
+#plt.plot(full_t, full_y)
+#plt.scatter(t_peaks, y_peaks, s=200, facecolors='none',
+#               edgecolors='limegreen', linewidths=2.5)
+#plt.show()
+
 # lets user look at plot and define fitting target
 t_target = plot_data(full_t, full_y, 1)
 
@@ -158,6 +163,19 @@ def phi_an(t):
     wd = np.sqrt(omega**2 - gamma**2)
     return np.exp(-gamma * (t - t0)) * (c1 * np.cos(wd * (t - t0)) + c2 * np.sin(wd * (t - t0)))
 
+#error = np.linalg.norm(phi_an(full_t[index:insert_index]) - full_y[index:insert_index]) / np.linalg.norm(full_y[index:insert_index])
+error = np.linalg.norm(phi_an(full_t[index:]) - full_y[index:], 2) / np.linalg.norm(full_y[index:], 2)
+
+error_full = np.abs((phi_an(full_t[index:]) - full_y[index:])) / (np.abs(full_y[index:]) + 1e-4)
+
+#plt.plot(full_t[index:], error_full, color='purple')
+#plt.title("Relative Absolute Error on Tail")
+#plt.show()
+
+
+#print("Error of Analytical Fit: ", error)
+
+
 
 # SECTION THREE - CLEANS NOISE FROM DATA
 ###################################################################################################
@@ -190,6 +208,18 @@ new_sig = signal[N_f//2:]
 ###################################################################################################
 
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
+
+#error_gen = np.linalg.norm(phi_gen[:index] - new_y[:index], 2) / np.linalg.norm(new_y[:index], 2)
+#print("Error of Transient Phase Recovery: ", error_gen)
+
+#error_two = np.linalg.norm(phi_gen - new_y, 2) / np.linalg.norm(new_y, 2)
+#print("Error for full phi recovery :", error_two)
+
+#wtf = np.abs(phi_gen[:index] - new_y[:index])/(np.abs(new_y[:index]) + 1e-4)
+
+#plt.plot(new_t[:index], wtf)
+#plt.show()
+
 
 # SECTION SIX - SAVE SIGNAL AND PLOT RESULTS
 ###################################################################################################
