@@ -14,6 +14,7 @@
         3. Cleans noise from the data before and after forcing
         4. Uses Fourier tranforms to produce the torque signal for the data
         5. Does a forward ODE solve using the extracted torquue signal to verify the results
+        6. Saves extracted torque signal to data directory in .csv format and plots results of code!
 
     All sections of this code are clearly labelled as step 0, 1, 2, 3, 4, or 5 for
     process trasparency.
@@ -24,6 +25,9 @@
 
 # switches plots on (1) or off (0)
 plot_switch = 1
+
+# saves extracted torque signal (1) or does not (0)
+write_t = 1
 
 # fit data after producing estimates of gamma dn omega (1) or no fit (0)
 fit_switch = 1
@@ -76,8 +80,8 @@ from fft_funcs import torque_solver, phi_from_torque
 ###################################################################################################
 
 os.chdir(data_dir)
-fname = spin_dir + "_" + re + "_trial" + str(trial_num) + ".csv"
-# fname = data_name
+data_name = spin_dir + "_" + re + "_trial" + str(trial_num)
+fname = data_name + ".csv"
 
 print("------------------------------")
 print("Data coming from ", fname, " in directory ", data_dir)
@@ -182,7 +186,23 @@ new_t   = franken_t[N_f//2:]
 new_y   = franken_y[N_f//2:]
 new_sig = signal[N_f//2:]
 
+# SECTION FIVE - 
+###################################################################################################
+
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
+
+# SECTION SIX - SAVE SIGNAL AND PLOT RESULTS
+###################################################################################################
+
+if(write_t == 1):
+    out_fname = data_name + "_signal.csv"
+    out_path = os.path.join(data_dir, out_fname)
+    if os.path.exists(out_path):
+        os.remove(out_path)
+        print("Existing file removed: ", out_path)
+    np.savetxt(out_path, np.column_stack([franken_t[N_f//2:], np.real(signal[N_f//2:])]),
+           delimiter=',', header='t,torque_signal', comments='')
+    print("Signal saved to: ", out_path)
 
 if(plot_switch == 1):
     plot_analytical(full_t, full_y, phi_an(full_t), index)
