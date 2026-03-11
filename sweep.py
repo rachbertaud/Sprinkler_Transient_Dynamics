@@ -39,6 +39,15 @@ start_sq    = 11
 end_sq      = 23
 count = 0
 
+fname = f"Results_Gam_{gamma_exact:.3f}_Omega_{omega_exact:.3f}.csv"
+
+outpath = os.path.join(os.path.dirname(__file__), fname)
+
+
+if os.path.exists(outpath):
+    os.remove(outpath)
+
+
 for res in range(16,20,2):
     # Build base data
     N = N_start * res
@@ -68,19 +77,12 @@ for res in range(16,20,2):
         t_insert = plot_data(t, phi, 0)
         count += 1
 
-    fname = f"ttarg_{t_target:.4f}_dt_{dt}_TauM_{tau_mag}.csv"
-
-    outpath = os.path.join(os.path.dirname(__file__), fname)
-
-
-    if os.path.exists(outpath):
-        os.remove(outpath)
 
     with open(outpath, 'w', newline='') as csvfile:
         wrtr = csv.writer(csvfile)
         wrtr.writerow(['STARTING VALUES'])
-        wrtr.writerow(['dt', 'gamma', 'omega', 'tau mag.','tau start time', 'tau end time'])
-        wrtr.writerow([])
+        wrtr.writerow(['dt', 'gamma', 'omega', 'tau mag.','tau start time', 'tau end time', 't target'])
+        wrtr.writerow([dt, gamma_exact, omega_exact, tau_mag, start_sq, end_sq, t_target])
         wrtr.writerow([])
 
     savename =  f"Results_ttarg_{t_target:.4f}_dt_{dt}_TauM_{tau_mag}.csv"
@@ -99,16 +101,16 @@ for res in range(16,20,2):
     print(header)
 
 
-    with open(savepath, 'w', newline='') as savefile:
-        wrt = csv.writer(savefile)
+    with open(outpath, 'w', newline='') as csvfile:
+        wrt = csv.writer(csvfile)
         wrt.writerow(['t', *t])
         wrt.writerow(['phi with noise', *phi])
         wrt.writerow(['phi exact', *phi_exact])
         wrt.writerow(['tau with noise', *tau])
-        wrt.writerow(['tau exact', tau_exact])
+        wrt.writerow(['tau exact', *tau_exact])
 
         for fit_switch, proc_data_switch in product([0, 1], [0, 1]):
-            wrt.writerow([])
+            wrt.writerow([*['-'*60]])
             wrt.writerow(['fit switch', fit_switch, 'proc_data_switch', proc_data_switch])
 
             print('*' * 30)
@@ -211,6 +213,7 @@ for res in range(16,20,2):
     
             with open(outpath, 'a', newline='') as  csvfile:
                 wrtr = csv.writer(csvfile)
+                wrtr.writerow(['fit switch', 'proc switch', 'err omega', 'err gamma', 'err an/noise', 'error an/clean', 'err tau/noise', 'err tau/clean', 'err for/noise', 'err for/clean'])
                 wrtr.writerow([fit_switch, proc_data_switch, err_w, err_g, err_int, err_an, err_an_c, err_sig, err_sig_c, err_for, err_for_c ])
 
 
