@@ -24,6 +24,8 @@ from dataread_funcs import plot_data, fit_segments
 from estimate_funcs import est_omega_d, est_gamma, get_constants, fit_phi
 from process_funcs import combine_data, remove_noise
 from fft_funcs import torque_solver, phi_from_torque, phi_from_torque_new
+# PLOT FUNCTIONS
+from plot_funcs import plot_analytical, plot_franken, plot_phi_gen, plot_torque
 
 
 # ---- Fixed Parameters (same as verf_of_main.py) ----
@@ -39,27 +41,57 @@ start_sq    = 11
 end_sq      = 23
 count = 0
 
+# load in real tau data
+data = np.loadtxt('forward_1000_trial1_signal.csv', delimiter=',', skiprows=1)
+tau_real = data[:,1]
+# plt.plot(tau_real)
+# plt.show()
+end_t = data[-1,0]
+N_real = len(tau_real)
+
+
 fname = f"Results_Gam_{gamma_exact:.3f}_Omega_{omega_exact:.3f}.csv"
 
 outpath = os.path.join(os.path.dirname(__file__), fname)
 
-
 if os.path.exists(outpath):
     os.remove(outpath)
 
+with open(outpath, 'w', newline='') as csvfile:
+    wrtr = csv.writer(csvfile)
+    wrtr.writerow(['Beginning Sweep!'])
 
-for res in range(16,20,2):
+
+for res in range(4,10,2):
     # Build base data
     N = N_start * res
-    t         = np.linspace(0, 60, N)
-    tau_exact = square_wave(tau_mag, t, start_sq, end_sq, 0)
+    # for downsampling tau
+    indices = np.linspace(0, N_real - 1, N, dtype=int)
+    t         = np.linspace(0, end_t, N)
+    tau_copy = tau_real.copy()
+    tau_exact = tau_copy[indices]
     phi_exact = phi_from_torque_new(t, tau_exact, gamma_exact, omega_exact)
-    t_int_exact = (end_sq - start_sq)*tau_mag
-    print("exact torque integral: ", t_int_exact)
-    dt = 60/N
+    plt.plot(t, phi_exact)
+    plt.show()
 
-    tau = square_wave(tau_mag, t, start_sq, end_sq, 1)
+    #with open('forward_1000_trial1_signal.csv', newline='') as datafile:
+    #    real_t_data = csv.reader(datafile, delimiter=',')
+
+    
+    t_int_exact = np.trapezoid(tau_exact, x=t)
+    print("exact torque integral: ", t_int_exact)
+    dt = end_t/N
+    
+    t_check   = np.linspace(0, end_t, 2048)
+    plt.plot(t_check,tau_real, '-o')
+    plt.plot(t, tau_exact, '-o')
+    plt.show()
+        
+    tau = tau_exact.copy()
     phi = phi_from_torque_new(t, tau, gamma_exact, omega_exact)
+    # plt.plot(t, phi)
+    # plt.show()
+
 
 
     # # Show setup plots (same as verf_of_main.py section 1)
@@ -72,25 +104,25 @@ for res in range(16,20,2):
     # plt.show()
 
     if(count == 0):
+        t_checker   = np.linspace(0, end_t, N_real)
+        phi_checker = phi_from_torque_new(t_checker, tau_real, gamma_exact, omega_exact)
+        # plt.plot(phi_checker)
         # User picks t_target and t_insert once — reused for all combinations
-        t_target = plot_data(t, phi, 1)
-        t_insert = plot_data(t, phi, 0)
+        t_target = plot_data(t_checker, phi_checker, 1)
+        t_insert = plot_data(t_checker, phi_checker, 0)
         count += 1
 
 
-    with open(outpath, 'w', newline='') as csvfile:
+    with open(outpath, 'a', newline='') as csvfile:
         wrtr = csv.writer(csvfile)
+        wrtr.writerow([*['*'*2048]])
         wrtr.writerow(['STARTING VALUES'])
         wrtr.writerow(['dt', 'gamma', 'omega', 'tau mag.','tau start time', 'tau end time', 't target'])
         wrtr.writerow([dt, gamma_exact, omega_exact, tau_mag, start_sq, end_sq, t_target])
-        wrtr.writerow([])
+        wrtr.writerow([*['-'*2048]])
 
-    savename =  f"Results_ttarg_{t_target:.4f}_dt_{dt}_TauM_{tau_mag}.csv"
+        
 
-    savepath = os.path.join(os.path.dirname(__file__), savename)
-
-    if os.path.exists(savepath):
-        os.remove(savepath)
             
     print('-' * 60)
 
@@ -101,16 +133,17 @@ for res in range(16,20,2):
     print(header)
 
 
-    with open(outpath, 'w', newline='') as csvfile:
+    with open(outpath, 'a', newline='') as csvfile:
         wrt = csv.writer(csvfile)
         wrt.writerow(['t', *t])
         wrt.writerow(['phi with noise', *phi])
         wrt.writerow(['phi exact', *phi_exact])
         wrt.writerow(['tau with noise', *tau])
         wrt.writerow(['tau exact', *tau_exact])
+        wrt.writerow([*['-'*2048]])
+
 
         for fit_switch, proc_data_switch in product([0, 1], [0, 1]):
-            wrt.writerow([*['-'*60]])
             wrt.writerow(['fit switch', fit_switch, 'proc_data_switch', proc_data_switch])
 
             print('*' * 30)
@@ -118,6 +151,8 @@ for res in range(16,20,2):
             # Fresh data copies each iteration (remove_noise mutates in-place)
             full_t = t.copy()
             full_y = phi.copy()
+            # plt.plot(full_t, full_y)
+            # plt.show()
 
             # Peaks
             loc, _ = find_peaks(np.abs(full_y))
@@ -155,7 +190,9 @@ for res in range(16,20,2):
                 )
 
             wrt.writerow(['phi_an', *phi_an(t[index:])])
-        
+
+            # plt.plot(t[index:], phi_an(t[index:]))
+            # plt.plot(t[index:], phi_exact[index:])
             err_an_c = error(phi_an(t[index:]), phi_exact[index:], 1, t[index:])
             #print(f"Error of analytical case with noise:     {err_an:.6f}")
 
@@ -181,7 +218,7 @@ for res in range(16,20,2):
             wrt.writerow(['torque', *signal[N_f//2:]])
 
             # calculates torque signal integral
-            torque_integral = np.trapezoid(signal, franken_t)
+            torque_integral = np.trapezoid(signal[N_f//2:], x=franken_t[N_f//2:])
             err_int = error(torque_integral, t_int_exact, 0, t)
 
             print("torque int :", torque_integral)
@@ -202,23 +239,41 @@ for res in range(16,20,2):
             # # Section 5 - Forward ODE solve
             phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
 
-            wrt.writerow(['generated phi', *phi_gen[N_f//2:]])
+            wrt.writerow(['generated phi', *phi_gen])
+
     
             err_for = error(phi_gen, phi, 1, t)
             # print(f"Error of forward case with noise:     {err_for:.6f}")
 
             err_for_c = error(phi_gen, phi_exact, 1, t)
             # print(f"Error of forward case with no noise:  {err_for:.6f}")
+            wrt.writerow([ 'err omega', 'err gamma', 'err integral', 'err an/noise', 'error an/clean', 'err tau/noise', 'err tau/clean', 'err for/noise', 'err for/clean'])
+            wrt.writerow([err_w, err_g, err_int, err_an, err_an_c, err_sig, err_sig_c, err_for, err_for_c])
+            wrt.writerow([*['-'*2048]])
 
-    
-            with open(outpath, 'a', newline='') as  csvfile:
-                wrtr = csv.writer(csvfile)
-                wrtr.writerow(['fit switch', 'proc switch', 'err omega', 'err gamma', 'err an/noise', 'error an/clean', 'err tau/noise', 'err tau/clean', 'err for/noise', 'err for/clean'])
-                wrtr.writerow([fit_switch, proc_data_switch, err_w, err_g, err_int, err_an, err_an_c, err_sig, err_sig_c, err_for, err_for_c ])
+            new_t   = franken_t[N_f//2:]
+            new_y   = franken_y[N_f//2:]
+            new_sig = signal[N_f//2:]
+
+            # plot_analytical(full_t, full_y, phi_an(full_t), index)
+            # plot_franken(franken_t, franken_y, full_t, index, t_end)
+            # plot_torque(franken_t, signal)
+            # plot_phi_gen(new_t, new_y, phi_gen)
+            # plt.show()
+
+            full_t      = None
+            full_y      = None
+            franken_t   = None
+            franken_y   = None
+            signal      = None
+            phi_gen     = None
+            t_seg       = None
+            y_seg       = None
 
 
 
-        print(f"Results written to: {outpath} and {savepath}")
+
+        print(f"Results written to: {outpath}")
         print('-' * 60)
 
 

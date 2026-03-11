@@ -35,7 +35,7 @@ def plot_data(t_data, y_data, flag):
 def fit_segments(full_t, full_y, t_peaks, t_target, t_insert):
     peak_index = np.argmin(np.abs(t_peaks - t_target))
     insert_index = np.argmin(np.abs(full_t - t_insert))
-    index = np.where(full_t == t_peaks[peak_index])[0][0]
+    index = np.argmin(np.abs(full_t - t_peaks[peak_index]))
     
     t_seg = full_t[index:insert_index]
     y_seg = full_y[index:insert_index]
