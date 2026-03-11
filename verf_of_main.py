@@ -35,7 +35,7 @@ fit_switch = 1
 
 # processes the data before forcing and after forcing to remove noise (1)
 # or uses raw data (0)
-proc_data_switch = 0
+proc_data_switch = 1
 
 gamma_exact = 0.345
 omega_exact = 7.412
@@ -43,6 +43,7 @@ N = int(2048)
 tau_mag = 100
 start_sq = 11
 end_sq = 23
+res = 4
 
 
 # DEFINE DEPENDENCIES AND UDFs
@@ -80,13 +81,15 @@ if(fit_switch == 1):
 if(proc_data_switch == 1):
     print("Data is being processed!")
 
+N = N*res
 # define a time interval with same stepping as real data 
-t = np.linspace(0,N,N)*0.033
+t = np.linspace(0,60,N)
 t = np.array(t)
 
 # define q square wave we know stuff about!!! This squ
-tau = square_wave(tau_mag, t, start_sq, end_sq)
+tau = square_wave(tau_mag, t, start_sq, end_sq, 1)
 tau_int_exact = (end_sq - start_sq)*tau_mag
+#tau = tau + np.random.normal(0,1, N)
 
 # Plot square wave!
 plt.plot(t, tau, color='pink')
@@ -145,8 +148,8 @@ c1_est, c2_est = get_constants(gamma_est, omega_est, full_y[index])
 print("------------------------------")
 print("-----ESTIMATES FROM PEAKS-----")
 print("------------------------------")
-print("Estimate of gamma: ", gamma_est, ", Error from exact = ", error(gamma_est, gamma_exact, 0))
-print("Estimate of omega: ", omega_est, ", Error from exact = ", error(omega_est, omega_exact, 0))
+print("Estimate of gamma: ", gamma_est, ", Error from exact = ", error(gamma_est, gamma_exact, 0, t))
+print("Estimate of omega: ", omega_est, ", Error from exact = ", error(omega_est, omega_exact, 0, t))
 
 # if user wants a fit...
 if(fit_switch == 1):
@@ -155,8 +158,8 @@ if(fit_switch == 1):
     print("------------------------------")
     print("-------VALUES AFTER FIT-------")
     print("------------------------------")
-    print("Gamma: ", gamma, ", Error from exact = ", error(gamma, gamma_exact, 0))
-    print("Omega: ", omega, ", Error from exact = ", error(omega, omega_exact, 0))
+    print("Gamma: ", gamma, ", Error from exact = ", error(gamma, gamma_exact, 0, t))
+    print("Omega: ", omega, ", Error from exact = ", error(omega, omega_exact, 0, t))
     print("------------------------------")
     
 
@@ -173,7 +176,7 @@ def phi_an(t):
     wd = np.sqrt(omega**2 - gamma**2)
     return np.exp(-gamma * (t - t0)) * (c1 * np.cos(wd * (t - t0)) + c2 * np.sin(wd * (t - t0)))
 
-err_an = error(phi_an(t[index:]), phi_exact[index:], 1)
+err_an = error(phi_an(t[index:]), phi_exact[index:], 1, t[index:])
 print("Error of analytical case:", err_an)
 
 #plt.plot(full_t[index:], error_full, color='purple')
@@ -188,27 +191,38 @@ print("Error of analytical case:", err_an)
 # SECTION THREE - CLEANS NOISE FROM DATA
 ###################################################################################################
 
+N_f = 2*2048*res
+
 if(proc_data_switch == 1):
     full_y = remove_noise(full_t, full_y, threshold=1)
 
-franken_t, franken_y, t_end = combine_data(full_t, full_y, index, phi_an, proc_data_switch)
+franken_t, franken_y, t_end = combine_data(full_t, full_y, index, phi_an, proc_data_switch, N_f)
 
 
 # SECTION FOUR - FOURIER TRANSFORM
 ###################################################################################################
 
-N_f = 2*2048
 L = franken_t[-1] - franken_t[0]
 h = L/N_f
 
 # outputs extracted torque signal
 signal = torque_solver(N_f, gamma, omega, L, franken_y)
 
-err_sig = error(signal[N_f//2:], tau, 1)
+# plt.plot(t, np.real(signal[N_f//2:]), color='red')
+# plt.plot(t, tau, color='black')
+# diff = np.abs(np.real(signal[N_f//2:]) - tau)
+# mt = np.linalg.norm(tau,2)
+# bb = diff/mt
+# print("linalg norm 2 tau:", mt)
+# plt.plot(t, bb)
+# plt.show()
+
+err_sig = error(signal[N_f//2:], tau, 1, t)
 print("Error of signal = ", err_sig)
 
 # calculates torque signal integral
-torque_integral = np.trapezoid(signal, franken_t)
+torque_integral = np.trapezoid(signal[N_f//2:], x=t)
+print(torque_integral)
 
 # going forwards
 new_t   = franken_t[N_f//2:]
@@ -220,7 +234,7 @@ new_sig = signal[N_f//2:]
 
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
 
-err_for = error(phi_gen, phi_exact, 1)
+err_for = error(phi_gen, phi_exact, 1, t)
 print("Error of Forward Case:", err_for)
 
 

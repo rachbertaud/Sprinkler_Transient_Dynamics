@@ -1,7 +1,8 @@
 import numpy as np
 
-def combine_data(full_t, full_y, index, phi_an, proc_data_switch):
-
+def combine_data(full_t, full_y, index, phi_an, proc_data_switch, N_f):
+    half = N_f//2
+    
     if(proc_data_switch == 1):
         full_y = full_y - full_y[0]  # clean out some data
 
@@ -10,20 +11,20 @@ def combine_data(full_t, full_y, index, phi_an, proc_data_switch):
 
     dt = np.mean(np.diff(full_t))
 
-    if(proc_data_switch == 1):
+    if(proc_data_switch == 1) or (len(full_t) < half):
         # define end of positive t
-        n_end = 2048 - len(full_t[:index])
-        t_end = np.linspace(spot + dt, spot + dt * n_end, n_end)
+        n_end = half - len(full_t[:index])
+        t_end = np.linspace(spot + dt, spot + dt * n_end, n_end-1)
     else:
         t_end = None
     
-    if(proc_data_switch == 1):
+    if(proc_data_switch == 1) or (len(full_t) < half):
         # define negative t
-        t_neg = np.arange(-2048 * dt, 0, dt)
+        t_neg = np.arange(-half * dt, 0, dt)
         y_neg = np.zeros(len(t_neg))
     else:
-        t_neg = np.arange(-2048 * dt, 0, dt)
-        y_neg = np.full(2048, full_y[0])
+        t_neg = np.arange(-half * dt, 0, dt)
+        y_neg = np.full(half, full_y[0])
 
 
     #print(len(t_neg), len(full_t[:index]), len(t_end))
@@ -31,11 +32,15 @@ def combine_data(full_t, full_y, index, phi_an, proc_data_switch):
 
     if(proc_data_switch == 1):
         # combine
-        franken_t = np.concatenate([t_neg, full_t[:index], t_end])
-        franken_y = np.concatenate([y_neg, full_y[:index], phi_an(t_end)])
+        franken_t = np.concatenate([t_neg, full_t[:index+1], t_end])
+        franken_y = np.concatenate([y_neg, full_y[:index+1], phi_an(t_end)])
+    elif(len(full_t) < half):
+        tail = np.zeros(len(t_end))
+        franken_t = np.concatenate([t_neg, full_t[:index+1], t_end])
+        franken_y = np.concatenate([y_neg, full_y[:index+1], tail])
     else:
-        franken_t = np.concatenate([t_neg, full_t[:2048]])
-        franken_y = np.concatenate([y_neg, full_y[:2048]])
+        franken_t = np.concatenate([t_neg, full_t[:half]])
+        franken_y = np.concatenate([y_neg, full_y[:half]])
 
     return franken_t, franken_y, t_end
 

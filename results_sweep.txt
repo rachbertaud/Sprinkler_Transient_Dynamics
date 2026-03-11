@@ -1,0 +1,76 @@
+Sweep Results
+t_target = 24.2969 s,  t_end = 60.0000 s
+gamma_exact = 0.345,  omega_exact = 7.412
+
+============================================================
+  fit_switch=0,  proc_data_switch=0
+============================================================
+------------------------------
+-----ESTIMATES FROM PEAKS-----
+------------------------------
+Estimate of gamma: 1.384696,  Error from exact = 3.013610
+Estimate of omega: 6.103430,  Error from exact = 0.176548
+Error of torque int:       0.320699
+------------------------------
+------------------------------
+Error of forward case with noise:     0.040784
+Error of forward case with no noise:  0.057427
+------------------------------
+
+============================================================
+  fit_switch=0,  proc_data_switch=1
+============================================================
+------------------------------
+-----ESTIMATES FROM PEAKS-----
+------------------------------
+Estimate of gamma: 1.384696,  Error from exact = 3.013610
+Estimate of omega: 6.103430,  Error from exact = 0.176548
+Error of torque int:       0.322923
+------------------------------
+------------------------------
+Error of forward case with noise:     0.129413
+Error of forward case with no noise:  0.141913
+------------------------------
+
+============================================================
+  fit_switch=1,  proc_data_switch=0
+============================================================
+------------------------------
+-----ESTIMATES FROM PEAKS-----
+------------------------------
+Estimate of gamma: 1.384696,  Error from exact = 3.013610
+Estimate of omega: 6.103430,  Error from exact = 0.176548
+------------------------------
+-------VALUES AFTER FIT-------
+------------------------------
+Gamma: 0.345744,  Error from exact = 0.002156
+Omega: 7.414066,  Error from exact = 0.000279
+------------------------------
+Error of torque int:       0.002367
+------------------------------
+------------------------------
+Error of forward case with noise:     0.049386
+Error of forward case with no noise:  0.061579
+------------------------------
+
+============================================================
+  fit_switch=1,  proc_data_switch=1
+============================================================
+------------------------------
+-----ESTIMATES FROM PEAKS-----
+------------------------------
+Estimate of gamma: 1.384696,  Error from exact = 3.013610
+Estimate of omega: 6.103430,  Error from exact = 0.176548
+------------------------------
+-------VALUES AFTER FIT-------
+------------------------------
+Gamma: 0.345744,  Error from exact = 0.002156
+Omega: 7.414066,  Error from exact = 0.000279
+------------------------------
+Error of torque int:       0.002320
+------------------------------
+------------------------------
+Error of forward case with noise:     0.052981
+Error of forward case with no noise:  0.064929
+------------------------------
+

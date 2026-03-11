@@ -12,7 +12,7 @@ def torque_solver(N_f, gamma, w_0, L, franken_y):
         np.arange(-N_f//2 + 1, 0)
     ])
     
-    signal = np.fft.ifft(np.fft.fft(franken_y) / G_hat(-kk))
+    signal = np.real(np.fft.ifft(np.fft.fft(franken_y) / G_hat(-kk)))
     
     return signal
 
@@ -31,7 +31,7 @@ def phi_from_torque_new(t_seg, signal, gamma, w_0):
     return phi_gen
 
 def phi_from_torque(N_f, franken_t, signal, gamma, w_0):
-    signal_chunk = np.real(signal[N_f//2:])  # signal from 0 to end of full_t
+    signal_chunk = signal[N_f//2:]  # signal from 0 to end of full_t
 
     t_seg = franken_t[N_f//2:]
 

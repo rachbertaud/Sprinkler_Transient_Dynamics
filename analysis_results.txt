@@ -1,0 +1,16 @@
+ fit proc |   an/noise   an/clean   torq_int  sig/noise  sig/clean  fwd/noise  fwd/clean
+----------------------------------------------------------------------------------------
+   0    0 |   0.070093   0.054674   0.007135   0.012677   0.019560   0.005395   0.020221
+   0    1 |   0.070093   0.054674   0.007272   0.013108   0.019834   0.012523   0.023920
+   1    0 |   0.036722   0.000154   0.001947   0.011482   0.018735   0.006186   0.021457
+   1    1 |   0.036722   0.000154   0.001946   0.011460   0.018710   0.005518   0.020244
+
+Best case per metric:
+-------------------------------------------------------
+  Analytical  (with noise)  fit=1  proc=0  ->  0.036722
+  Analytical  (clean)       fit=1  proc=0  ->  0.000154
+  Torque integral           fit=1  proc=1  ->  0.001946
+  Signal      (with noise)  fit=1  proc=1  ->  0.011460
+  Signal      (clean)       fit=1  proc=1  ->  0.018710
+  Forward     (with noise)  fit=0  proc=0  ->  0.005395
+  Forward     (clean)       fit=0  proc=0  ->  0.020221
