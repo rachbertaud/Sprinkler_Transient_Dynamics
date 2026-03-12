@@ -17,7 +17,7 @@ from scipy.signal import find_peaks
 from itertools import product
 import csv
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'Verf_Functions'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../Verf_Functions'))
 
 from construct_funcs import square_wave, error
 from dataread_funcs import plot_data, fit_segments
@@ -35,7 +35,7 @@ print("gamma exact: ", gamma_exact)
 print("omega_exact", omega_exact)
 
 res = 1
-N_start     = int(256)
+N_start     = int(2048)
 tau_mag     = 200
 start_sq    = 11
 end_sq      = 23
@@ -61,8 +61,9 @@ tau_real, _ = denoise_from_quiet_region(
     quiet_end_idx=cut_idx,       # where the quiet region ends
 )
 
-
-plt.plot(t_real,tau_real)
+plt.plot(t_real, data[:,1], color='hotpink', label='Experimental Data')
+plt.plot(t_real,tau_real, color='purple', label='Smoothed Data')
+plt.legend()
 plt.show()
 
 
@@ -91,7 +92,7 @@ with open(outpath, 'w', newline='') as csvfile:
     wrtr.writerow(['real int', t_int_exact])
 
 
-for res in range(4,8,2):
+for res in range(6,8,2):
     # Build base data
     N = N_start * res
     # for downsampling tau
@@ -248,8 +249,8 @@ for res in range(4,8,2):
             signal = torque_solver(N_f2, gamma, omega, L, franken_y)
 
             wrt.writerow(['torque', *signal[N_f2:]])
-            print('sig', len(signal))
-            print('t', len(franken_t))
+            # print('sig', len(signal))
+            # print('t', len(franken_t))
             # calculates torque signal integral
             torque_integral = np.trapezoid(signal[N_f2:], x=franken_t[N_f2:])
             err_int = error(torque_integral, t_int_exact, 0, t)
@@ -262,6 +263,10 @@ for res in range(4,8,2):
 
             err_sig = error(signal[N_f2:], tau, 1, t)
             #print(f"Error of signal with noise:           {err_sig:.6f}")
+            #
+            plt.plot(t, signal[N_f2:])
+            plt.plot(t, tau)
+            plt.show()
 
             err_sig_c = error(signal[N_f2:], tau_exact, 1, t)
             #print(f"Error of signal with no noise:        {err_sig:.6f}")

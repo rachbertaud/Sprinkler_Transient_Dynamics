@@ -29,14 +29,14 @@ from plot_funcs import plot_analytical, plot_franken, plot_phi_gen, plot_torque
 
 
 # ---- Fixed Parameters (same as verf_of_main.py) ----
-gamma_exact = 0.567
-omega_exact = 9.87
+gamma_exact = 0.548
+omega_exact = 6.24
 print("gamma exact: ", gamma_exact)
 print("omega_exact", omega_exact)
 
 res = 1
-N_start     = int(256)
-tau_mag     = 200
+N_start     = int(2048)
+tau_mag     = 50
 start_sq    = 11
 end_sq      = 23
 count = 0
@@ -44,12 +44,18 @@ count = 0
 N_exact = 2048
 t_exact = np.linspace(0, 60, N_exact)
 tau_exact = square_wave(tau_mag, t_exact, start_sq, end_sq, 1)
-plt.plot(t_exact, tau_exact)
+#plt.plot(t_exact, tau_exact)
 phi_exact = phi_from_torque_new(t_exact, tau_exact, gamma_exact, omega_exact)
 t_int_exact = np.trapezoid(tau_exact, x=t_exact)
 print("exact torque integral: ", t_int_exact)
 
-fname = f"Results_Gam_{gamma_exact:.3f}_Omega_{omega_exact:.3f}.csv"
+plt.plot(t_exact, phi_exact, color='hotpink')
+plt.show()
+
+plt.plot(t_exact,tau_exact, color='hotpink')
+plt.show()
+
+fname = f"Results_N_{N_start}_Gam_{gamma_exact:.3f}_Omega_{omega_exact:.3f}.csv"
 
 outpath = os.path.join(os.path.dirname(__file__), fname)
 
@@ -65,17 +71,20 @@ with open(outpath, 'w', newline='') as csvfile:
     wrtr.writerow(['exact int', t_int_exact])
 
 
-for res in range(1,8,1):
+for res in range(1,2):
     # Build base data
     N = N_start * res
     # for downsampling tau
 
     indices = np.linspace(0, N_exact-1, N, dtype=int)
     t         = np.linspace(0, 60, N)
-    
+
+    # tau_copy = tau_exact.copy()
+    # phi_copy = phi_exact.copy()
     tau = tau_exact[indices]
     phi = phi_exact[indices]
-
+    # plt.plot(t, tau)
+    # plt.show()
     
     dt = 60/N
     
@@ -100,8 +109,10 @@ for res in range(1,8,1):
 
     if(count == 0):
         # User picks t_target and t_insert once — reused for all combinations
-        t_target = plot_data(t_exact, phi_exact, 1)
-        t_insert = plot_data(t_exact, phi_exact, 0)
+        # t_target = plot_data(t_exact, phi_exact, 1)
+        # t_insert = plot_data(t_exact, phi_exact, 0)
+        t_target = 28.52
+        t_insert = 36.02
         count += 1
 
 
@@ -203,9 +214,16 @@ for res in range(1,8,1):
             L      = franken_t[-1] - franken_t[0]
             signal = torque_solver(N_f2, gamma, omega, L, franken_y)
 
+        
+            # plt.plot(t, signal[N_f2:],'-')
+            # plt.plot(t, tau, color='pink')
+            # plt.show()
+            # plt.clf()
+
+
             wrt.writerow(['torque', *signal[N_f2:]])
-            print('sig', len(signal))
-            print('t', len(franken_t))
+            # print('sig', len(signal))
+            # print('t', len(franken_t))
             # calculates torque signal integral
             torque_integral = np.trapezoid(signal[N_f2:], x=franken_t[N_f2:])
             err_int = error(torque_integral, t_int_exact, 0, t)
@@ -213,10 +231,14 @@ for res in range(1,8,1):
             print("torque int :", torque_integral)
            # print(f"Error of torque int:       {err_int:.6f}")
 
-    
+            # plt.plot(t, tau, color='purple')
            # print("------------------------------")
 
             err_sig = error(signal[N_f2:], tau, 1, t)
+
+            # plt.plot(t, signal[N_f2:],'-')
+            # plt.plot(t, tau, color='pink')
+            # plt.show()
 
             # print("------------------------------")
 

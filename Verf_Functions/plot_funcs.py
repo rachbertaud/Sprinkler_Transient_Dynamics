@@ -15,9 +15,12 @@ def plot_analytical(full_t, full_y, y_fit, index):
                edgecolors='limegreen', linewidths=2.5, zorder=4, label='Start of Data Used to Find Gamma/Omega')
 
         # zoom around fit region
-    ax.set_xlim(full_t[index] - 1, full_t[-1] + 1)
-    y_region = full_y[index:]
-    ax.set_ylim(y_region.min() - 0.1, y_region.max() + 0.1)
+    # ax.set_xlim(full_t[index] - 1, full_t[-1] + 1)
+    # y_region = full_y[index:]
+    # ax.set_ylim(y_region.min() - 0.1, y_region.max() + 0.1)
+    #
+    ax.set_xlim(28,38)
+    ax.set_ylim(-.1,.1)
 
     ax.legend()
     ax.set_xlabel('t')
