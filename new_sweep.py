@@ -41,38 +41,13 @@ start_sq    = 11
 end_sq      = 23
 count = 0
 
-# load in real tau data
-data = np.loadtxt('forward_1000_trial1_signal.csv', delimiter=',', skiprows=1)
-tau_real = data[:,1]
-end_t = data[-1,0]
-N_real = len(tau_real)
-t_real  = np.linspace(0, end_t, N_real)
-
-# this should characterize noise in teh known "quiet" region and then remove it
-# cleaned, cutoff = denoise_from_quiet_region(
-dt = end_t/2048
-t_cutoff = plot_data(t_real, tau_real, 3)
-plt.plot(t_real, tau_real)
-
-cut_idx = np.argmin(np.abs(t_real - t_cutoff))
-tau_real, _ = denoise_from_quiet_region(
-    data=tau_real,
-    sample_rate=1.0 / dt,   # or whatever your dt is
-    quiet_end_idx=cut_idx,       # where the quiet region ends
-)
-
-
-plt.plot(t_real,tau_real)
-plt.show()
-
-
-phi_real = phi_from_torque_new(t_real, tau_real, gamma_exact, omega_exact)
-t_int_exact = np.trapezoid(tau_real, x=t_real)
+N_exact = 2048
+t_exact = np.linspace(0, 60, N_exact)
+tau_exact = square_wave(tau_mag, t_exact, start_sq, end_sq, 1)
+plt.plot(t_exact, tau_exact)
+phi_exact = phi_from_torque_new(t_exact, tau_exact, gamma_exact, omega_exact)
+t_int_exact = np.trapezoid(tau_exact, x=t_exact)
 print("exact torque integral: ", t_int_exact)
-
-end_t = data[-1,0]
-N_real = len(tau_real)
-
 
 fname = f"Results_Gam_{gamma_exact:.3f}_Omega_{omega_exact:.3f}.csv"
 
@@ -84,40 +59,31 @@ if os.path.exists(outpath):
 with open(outpath, 'w', newline='') as csvfile:
     wrtr = csv.writer(csvfile)
     wrtr.writerow(['Beginning Sweep!'])
-    wrtr.writerow(['Real t', *t_real])
-    wrtr.writerow(['real phi', *phi_real])
-    wrtr.writerow(['noisy tau', *data[:,1]])
-    wrtr.writerow(['clean tau', *tau_real])
-    wrtr.writerow(['real int', t_int_exact])
+    wrtr.writerow(['exact t', *t_exact])
+    wrtr.writerow(['exact phi', *phi_exact])
+    wrtr.writerow(['exact tau', *tau_exact])
+    wrtr.writerow(['exact int', t_int_exact])
 
 
-for res in range(4,8,2):
+for res in range(1,8,1):
     # Build base data
     N = N_start * res
     # for downsampling tau
 
-    indices = np.linspace(0, N_real - 1, N, dtype=int)
-    t         = np.linspace(0, end_t, N)
-    tau_copy = tau_real.copy()
-    phi_copy = phi_real.copy()
-    tau_exact = tau_copy[indices]
-    phi_exact = phi_copy[indices]
-    # plt.plot(t, phi_exact)
-    # plt.show()
-
-    #with open('forward_1000_trial1_signal.csv', newline='') as datafile:
-    #    real_t_data = csv.reader(datafile, delimiter=',')
+    indices = np.linspace(0, N_exact-1, N, dtype=int)
+    t         = np.linspace(0, 60, N)
+    
+    tau = tau_exact[indices]
+    phi = phi_exact[indices]
 
     
-    dt = end_t/N
+    dt = 60/N
     
-    # t_check   = np.linspace(0, end_t, 2048)
-    # plt.plot(t_check,tau_real, '-o')
+    # t_check   = np.linspace(0, end_t, N_exact)
+    # plt.plot(t_check,tau, '-o')
     # plt.plot(t, tau_exact, '-o')
     # plt.show()
-        
-    tau = tau_exact.copy()
-    phi = phi_exact.copy()
+    # 
     # plt.plot(t, phi)
     # plt.show()
 
@@ -133,12 +99,9 @@ for res in range(4,8,2):
     # plt.show()
 
     if(count == 0):
-        t_checker   = np.linspace(0, end_t, N_real)
-        phi_checker = phi_from_torque_new(t_checker, tau_real, gamma_exact, omega_exact)
-        # plt.plot(phi_checker)
         # User picks t_target and t_insert once — reused for all combinations
-        t_target = plot_data(t_checker, phi_checker, 1)
-        t_insert = plot_data(t_checker, phi_checker, 0)
+        t_target = plot_data(t_exact, phi_exact, 1)
+        t_insert = plot_data(t_exact, phi_exact, 0)
         count += 1
 
 
@@ -165,10 +128,8 @@ for res in range(4,8,2):
     with open(outpath, 'a', newline='') as csvfile:
         wrt = csv.writer(csvfile)
         wrt.writerow(['t', *t])
-        wrt.writerow(['phi with noise', *phi])
-        wrt.writerow(['phi exact', *phi_exact])
-        wrt.writerow(['tau with noise', *tau])
-        wrt.writerow(['tau exact', *tau_exact])
+        wrt.writerow(['phi', *phi])
+        wrt.writerow(['tau', *tau])
         wrt.writerow([*['-'*2048]])
 
 
@@ -222,11 +183,8 @@ for res in range(4,8,2):
 
             # plt.plot(t[index:], phi_an(t[index:]))
             # plt.plot(t[index:], phi_exact[index:])
-            err_an_c = error(phi_an(t[index:]), phi_exact[index:], 1, t[index:])
-            #print(f"Error of analytical case with noise:     {err_an:.6f}")
-
             err_an = error(phi_an(t[index:]), phi[index:], 1, t[index:])
-            #print(f"Error of analytical case with no noise:  {err_an:.6f}")
+            #print(f"Error of analytical case with noise:     {err_an:.6f}")
 
             #print("------------------------------")
 
@@ -241,8 +199,6 @@ for res in range(4,8,2):
             franken_t, franken_y, t_end = combine_data(full_t, full_y, index, phi_an, proc_data_switch, N_f, N_f2)
 
             # Section 4 - FFT / torque extraction
-            # print('sig', len(signal))
-            # print('t', len(franken_t))
 
             L      = franken_t[-1] - franken_t[0]
             signal = torque_solver(N_f2, gamma, omega, L, franken_y)
@@ -261,12 +217,7 @@ for res in range(4,8,2):
            # print("------------------------------")
 
             err_sig = error(signal[N_f2:], tau, 1, t)
-            #print(f"Error of signal with noise:           {err_sig:.6f}")
 
-            err_sig_c = error(signal[N_f2:], tau_exact, 1, t)
-            #print(f"Error of signal with no noise:        {err_sig:.6f}")
-
-    
             # print("------------------------------")
 
             # # Section 5 - Forward ODE solve
@@ -278,10 +229,8 @@ for res in range(4,8,2):
             err_for = error(phi_gen, phi, 1, t)
             # print(f"Error of forward case with noise:     {err_for:.6f}")
 
-            err_for_c = error(phi_gen, phi_exact, 1, t)
-            # print(f"Error of forward case with no noise:  {err_for:.6f}")
-            wrt.writerow([ 'err omega', 'err gamma', 'err integral', 'err an/noise', 'error an/clean', 'err tau/noise', 'err tau/clean', 'err for/noise', 'err for/clean'])
-            wrt.writerow([err_w, err_g, err_int, err_an, err_an_c, err_sig, err_sig_c, err_for, err_for_c])
+            wrt.writerow([ 'err omega', 'err gamma', 'err integral', 'err an/phi', 'err tau/syn', 'err for/phi'])
+            wrt.writerow([err_w, err_g, err_int, err_an, err_sig, err_for])
             wrt.writerow([*['-'*2048]])
 
             new_t   = franken_t[N_f2:]
