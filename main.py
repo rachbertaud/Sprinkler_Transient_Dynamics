@@ -38,7 +38,7 @@ proc_data_switch = 0
 
 # define the spin direction of data to use
 # reads from data file name, i.e. for "forward_500_trail1" put "forward" here
-spin_dir = "forward"
+spin_dir = "rev"
 
 # define reynolds number of data to use
 # reads from data file name, i.e. for "forward_500_trail1" put "500" here 
