@@ -191,6 +191,9 @@ new_sig = signal[N_f//2:]
 
 phi_gen = phi_from_torque(N_f, franken_t, signal, gamma, omega)
 
+
+err = np.sqrt(np.trapezoid(((phi_gen - new_y)**2), x=new_t)) / np.sqrt(np.trapezoid((new_y**2), x=new_t))
+print("Error forward: ", err)
 # SECTION SIX - SAVE SIGNAL AND PLOT RESULTS
 ###################################################################################################
 
